@@ -1,0 +1,11 @@
+
+__init__:
+	包括两个类，Seg和AllInfo
+	Seg用来分词,编码是UTF-8
+	AllInfo用来拿到一句话的所有 pos , ner , seg
+	AllInfo弃用，因为ner效果太差
+	NOTICE:调用方法
+			s = Seg()
+			s.seg()
+			返回数据
+			切词后的句子用空格分隔

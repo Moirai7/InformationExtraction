@@ -1,0 +1,15 @@
+java 版本是1.8:
+安装：
+jumbo install sun-java8
+修改java路径：JAVA_HOME改成自己的路径
+export JAVA_HOME=/home/spider/.jumbo/opt/sun-java8
+export PATH="$JAVA_HOME/bin/:$PATH"
+export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
+
+__init__:
+	包括一个类，Stranford
+	测试方法：cat seg_o |python __init__.py
+	输入True表示得到的结果包括dep，现在调用时建议默认False
+	Stranford
+			get_ner_pos得到ner和pos(dep)元组
+			get_in_line得到ner和pos(dep)一行
