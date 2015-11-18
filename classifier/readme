@@ -1,0 +1,7 @@
+
+__init__:
+	测试方法：cat test|python __init__.py
+	包括两个类Extract和Classifier
+	Extract是直接用ner进行抽取的
+	Classifier是先训练，用分类器去判断到底属于哪个分类的
+	Classifier暂时不要用，因为还需要处理
