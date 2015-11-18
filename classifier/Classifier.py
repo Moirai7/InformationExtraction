@@ -244,6 +244,57 @@ class Classifier:
 		#	print s[i].encode('utf-8')+' '+str(i+1)+' '+pred[i]+' '+''.join(_seg[i]).encode('utf-8')
 		return (score,len(pred))
 
+	def _train(self,lines_info,newwords,tags):
+		(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
+		import cPickle as pickle
+		if self.identify == 'muqin':
+			f = open('classifier/train_tag_muqin_dep.txt', 'wb')             
+			f2 = open('classifier/train_hash_muqin_dep.txt', 'wb')             
+		elif self.identify == 'fuqin':
+			f = open('classifier/train_tag_fuqin_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_fuqin_dep.txt', 'wb')
+		elif self.identify == 'erzi':
+			f = open('classifier/train_tag_erzi_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_erzi_dep.txt', 'wb')
+		elif self.identify == 'nver':
+			f = open('classifier/train_tag_nver_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_nver_dep.txt', 'wb')
+		elif self.identify == 'nvyou':
+			f = open('classifier/train_tag_nvyou_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_nvyou_dep.txt', 'wb')
+		elif self.identify == 'nanyou':
+			f = open('classifier/train_tag_nanyou_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_nanyou_dep.txt', 'wb')
+		elif self.identify == 'zhangfu':
+			f = open('classifier/train_tag_zhangfu_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_zhangfu_dep.txt', 'wb')
+		elif self.identify == 'qizi':
+			f = open('classifier/train_tag_qizi_dep.txt', 'wb')
+			f2 = open('classifier/train_hash_qizi_dep.txt', 'wb')
+		pickle.dump(word,f2)
+		f2.close()
+		pickle.dump(p,f)
+		f.close()
+		#quit(0)
+		return self.train_using_process(p,word)
+
+	def _test(self,lines_info,newwords,tags,htmls,an):
+		#print 'Process Data start'
+		(s,p,words,_seg,_ner,htmls,deps) = self._process_data_indri(lines_info,newwords,tags=tags,htmls=htmls)
+		if len(words)<2:
+			print ' words <2 too small'
+			return []
+		#print 'Classifier start'
+		(s,p,_seg,_ner,deps) = self.classifier_using_process(s,p,words,_seg,_ner,self.clf,htmls,an,deps)
+		if len(p)<2:
+			print 'classifier <2 too small'
+			return []
+		list=self.statistics(s,p,_seg,_ner,deps)
+		if len(list)==0:
+			print 'len list ==0'
+			return []
+		return list
+
 	#count the answer of a relation
 	def statistics(self,newwords,tags,segs,ners,deps):
 		s=newwords[0]
@@ -368,55 +419,23 @@ class Classifier:
 				lines.append(line[3].strip())
 			except Exception,e:
 				traceback.print_exc()
-		(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
-		import cPickle as pickle
-		if self.identify == 'muqin':
- 			f = open('classifier/train_tag_muqin_dep.txt', 'wb')             
- 			f2 = open('classifier/train_hash_muqin_dep.txt', 'wb')             
-			#pass
-                elif self.identify == 'fuqin':
-            		f = open('classifier/train_tag_fuqin_dep.txt', 'wb')
-            		f2 = open('classifier/train_hash_fuqin_dep.txt', 'wb')
-                elif self.identify == 'erzi':
-          		f = open('classifier/train_tag_erzi_dep.txt', 'wb')
-          		f2 = open('classifier/train_hash_erzi_dep.txt', 'wb')
-                elif self.identify == 'nver':
-        		f = open('classifier/train_tag_nver_dep.txt', 'wb')
-        		f2 = open('classifier/train_hash_nver_dep.txt', 'wb')
-                elif self.identify == 'nvyou':
-			f = open('classifier/train_tag_nvyou_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_nvyou_dep.txt', 'wb')
-                elif self.identify == 'nanyou':
-    			f = open('classifier/train_tag_nanyou_dep.txt', 'wb')
-    			f2 = open('classifier/train_hash_nanyou_dep.txt', 'wb')
-                elif self.identify == 'zhangfu':
-  			f = open('classifier/train_tag_zhangfu_dep.txt', 'wb')
-  			f2 = open('classifier/train_hash_zhangfu_dep.txt', 'wb')
-                elif self.identify == 'qizi':
-			f = open('classifier/train_tag_qizi_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_qizi_dep.txt', 'wb')
-		pickle.dump(word,f2)
-		f2.close()
-		pickle.dump(p,f)
-		f.close()
-		#quit(0)
-		clf = self.train_using_process(p,word)
+		clf = self._train(lines_info,newwords,tags=tags)
 		from sklearn.externals import joblib
-                if self.identify == 'muqin':
+		if self.identify == 'muqin':
 			joblib.dump(clf,'classifier/train_data/muqin_logic_dep.train')
-                elif self.identify == 'fuqin':
+		elif self.identify == 'fuqin':
 			joblib.dump(clf,'classifier/train_data/fuqin_logic_dep.train')
-                elif self.identify == 'erzi':
+		elif self.identify == 'erzi':
 			joblib.dump(clf,'classifier/train_data/erzi_logic_dep.train')
-                elif self.identify == 'nver':
+		elif self.identify == 'nver':
 			joblib.dump(clf,'classifier/train_data/nver_logic_dep.train')
-                elif self.identify == 'nvyou':
+		elif self.identify == 'nvyou':
 			joblib.dump(clf,'classifier/train_data/nvyou_logic_dep.train')
-                elif self.identify == 'nanyou':
+		elif self.identify == 'nanyou':
 			joblib.dump(clf,'classifier/train_data/nanyou_logic_dep.train')
-                elif self.identify == 'zhangfu':
+		elif self.identify == 'zhangfu':
 			joblib.dump(clf,'classifier/train_data/zhangfu_logic_dep.train')
-                elif self.identify == 'qizi':
+		elif self.identify == 'qizi':
 			joblib.dump(clf,'classifier/train_data/qizi_logic_dep.train')
 		print clf
 
@@ -442,21 +461,7 @@ class Classifier:
 			     info=sys.exc_info() 
 			     print info[0],":",info[1]
 		      	     print 'read wrong (except):'+'\t'.join(line)
-		#print 'Process Data start'
-		(s,p,words,_seg,_ner,htmls,deps) = self._process_data_indri(lines_info,newwords,tags=tags,htmls=htmls)
-		if len(words)<2:
-			print ' words <2 too small'
-			return []
-		#print 'Classifier start'
-		(s,p,_seg,_ner,deps) = self.classifier_using_process(s,p,words,_seg,_ner,self.clf,htmls,an,deps)
-		if len(p)<2:
-			print 'classifier <2 too small'
-			return []
-		list=self.statistics(s,p,_seg,_ner,deps)
-		if len(list)==0:
-			print 'len list ==0'
-			return []
-		return list
+		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an)
 
 	def test_verify_indri(self,_lines,lines_info):
 		#just count
@@ -474,179 +479,12 @@ class Classifier:
 		     except:
 			info=sys.exc_info()
 		#print 'Process Data start'
-		(s,p,words,_seg,_ner) = self._process_data_indri_test(lines_info,newwords,tags=tags)
+		(s,p,words,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
 		if len(words)<2:
 			return (0,0)
 		#print 'Classifier start'
 		return self.classifier_get_score(s,p,words,_seg,self.clf)
-		
 
-	def test_indri(self,_lines):
-		lines=[]
-		tags=[]
-		newwords=[]
-		ss = ''
-		pstr = ''
-		current=-1
-		for line in _lines:
-		     try:
-			line = line.split('\t')
-			if len(line)<4:
-				#print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
-				continue
-			ss = line[0]
-			pstr = line[1]
-			tags.append(line[1])
-			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-			if line[3].strip()!='':
-				lines.append(line[3].strip())
-		     except :
-			     info=sys.exc_info() 
-			     print info[0],":",info[1]
-		      	     print 'read wrong (except):'+'\t'.join(line)
-		print 'Process Data start'
-		(s,p,words,_seg,_ner) = self._process_data(lines,newwords,tags=tags)
-		if len(words)<2:
-			print ' words <2 too small'
-			return []
-		print 'Classifier start'
-		(s,p,_seg,_ner) = self.classifier_using_process(s,p,words,_seg,_ner,self.clf)
-		if len(p)<2:
-			print 'classifier <2 too small'
-			return []
-		list=self.statistics(s,p,_seg,_ner)
-		if len(list)==0:
-			print 'len list ==0'
-			return []
-		return list
-
-	def test_train(self):
-		lines =[]
-		tags =[]
-		newwords=[]
-		newwords2=[u"\u5988\u5988",u"\u6bcd\u4eb2"]
-		for line in sys.stdin:
-		     try:
-			line = line.split('\t')
-			if len(line)<4:
-				print 'read wrong('+str(len(line))+'):'+'\t'.join(line)
-				continue
-			tags.append(line[1])
-			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-			#newwords2.append((line[2],(self.relation[line[1].decode('utf-8')])[0]))
-			if line[3].strip()!='':
-				lines.append(line[3].strip())
-		     except Exception,e:
-				traceback.print_exc()
-			 	print 'read wrong (except):'+'\t'.join(line)
-		(s,p,word,_seg,_ner) = self._process_data(lines,newwords,tags=tags)
-		import cPickle as pickle
-		f = open('classifier/train_hash.txt', 'wb')
-		pickle.dump(word,f)
-		f.close()
-		f = open('classifier/train_tag.txt', 'wb')
-		pickle.dump(p,f)
-		f.close()
-		#quit(0)
-		del s
-		del _seg
-		del _ner
-		clf = self.train_using_process(p,word)
-		from sklearn.externals import joblib
-		joblib.dump(clf,'classifier/train_data/fanhua_logic_position.train')
-
-	def test_test(self):
-		file = open('high_pv_person','rb')
-		ren =[]
-		while True:
-			line = file.readline()
-			if line:
-				ren.append(line.strip('\r\n').strip('\n').split('\t')[0])
-			else:
-				break
-		file.close()
-		lines=[]
-		tags=[]
-		newwords=[]
-		ss = ''
-		pstr = ''
-		anstr = ''
-		check=False
-		from sklearn.externals import joblib
-		clf = joblib.load('classifier/train_data/fanhua_logic.train')
-		wf = open('result_fanhua_logic','wb')
-		current=0
-		all=0
-		for line in sys.stdin:
-		     try:
-			line = line.split('\t')
-			if len(line)<5:
-				print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
-				continue
-			if line[0] not in ren:
-				print 'not in high pv : '+'\t'.join(line)
-				continue
-			#if line[1] != 'qizi':
-				#continue
-			if ss != line[0] and check:
-				(s,p,words,_seg,_ner) = self._process_data(lines,newwords,None,tags=tags)
-				if len(words)<2:
-					#print 'too small'
-					ss = line[0]
-					continue
-				(s,p,_seg,_ner) = self.classifier_using_process(s,p,words,_seg,_ner,clf)
-				list=self.statistics(s,p,_seg,_ner)
-				wf.write(ss+'\t'+pstr+'\t'+anstr+'\n')
-				all+=1
-				for l in list:
-					print 'result'+l
-					wf.write(l+"\n\n")
-					if l.split('\t')[2]==anstr:
-						current+=1
-				print current
-				lines=[]
-				tags=[]
-				newwords=[]
-			ss = line[0]
-			pstr = line[1]
-			anstr = line[2]
-			tags.append(line[1])
-			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-			#newwords2.append((line[2],(self.relation[line[1].decode('utf-8')])[0]))
-			if line[4].strip()!='':
-				check=True
-				lines.append(line[4].strip())
-			else:
-				print 'read wrong ('+line[4]+'):'+'\t'.join(line)
-		     except :
-			     info=sys.exc_info() 
-			     print info[0],":",info[1]
-		      	     print 'read wrong (except):'+'\t'.join(line)
-		#(s,p,_seg,_ner) = self.classifier(lines,tags,newwords,clf)
-		#(s,p,words,_seg,_ner) = self._process_data(lines,newwords,None,tags=tags)
-		#(s,p,_seg,_ner) = self.classifier_using_process(s,p,words,_seg,_ner)
-		#list = self.statistics(s,p,_seg,_ner)
-		#print '\nstart\n'
-		#for l in list:
-		#	print l.encode('utf-8')
-		wf.write('all'+str(all))
-		wf.write('current'+str(current))
-		wf.close()
-
-	def test(self):
-		lines=[]
-		for line in sys.stdin:
-			lines.append(line.strip('\n'))
-		clf = self.test_indri(lines)
-
-	def test4(self):
-		(s,p,answer,word) = self._process_data_file("qizi_for_train")
-		list = self.statistics(s,p,answer)
-		for l in list:
-			print l.encode('utf-8')
-		clf = self.train_using_process(s,p,answer,word)
-		joblib.dump(clf, 'qizi.train')
-		
 if __name__ == '__main__':
 	c = Classifier(test=False,genre='n_tuple')
 	c.test_train()
