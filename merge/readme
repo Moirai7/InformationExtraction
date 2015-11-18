@@ -1,0 +1,11 @@
+
+__init__:
+	包括两个类，Merge和Sentence
+	Sentence已经弃用，因为indri给的句子不需要再处理了
+	测试方法cat ner | python __init__.py
+	Merge
+		因为中间处理的思路有点乱，merge留下了很多方法，有些如果要使用，还需要根据新的需求进行少量修改
+		目前的思路是，_get_line_json得到seg分词结果和stanford ner pos结果，不包括dep
+		所以调用方法
+			line_json = _get_line_json(line)
+			get_line_info(line_json,False)

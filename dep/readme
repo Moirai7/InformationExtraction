@@ -1,0 +1,8 @@
+
+__init__:
+	测试方法：cat ner|python __init__.py
+	包括一个类Dep
+	调用方法dep_from_line(line)
+	Dep
+		_dep_line返回所有信息
+		_dep_line_without_ner返回dep没有ner信息

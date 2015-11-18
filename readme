@@ -1,0 +1,40 @@
+java 版本是1.8:
+安装：
+jumbo install sun-java8
+修改java路径：JAVA_HOME改成自己的路径
+export JAVA_HOME=/home/spider/.jumbo/opt/sun-java8
+export PATH="$JAVA_HOME/bin/:$PATH"
+export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
+
+
+在classifier目录下
+cat test|python __init__.py>output
+
+详细介绍：
+classifier 分类器和SPO抽取
+dep nlp计算依赖关系
+seg jieba分词
+stanford stanford计算POS和NER（也可以计算依赖关系，效果好但速度慢）
+merge 抽取句子模版
+
+TIP:
+使用分类器功能需要
+需要安装numpy和scipy，主要进行数学计算
+然后安装lib下的sklearn，主要进行分类计算
+
+思路：
+1、使用seg分词
+2、使用stanford计算POS和NER
+3、使用dep计算依赖关系
+4、使用merge抽取模版
+5、使用classifier进行训练和抽取
+
+IE系统最终需要我这部分的，只有dep、merge和classifier
+
+调用方法：
+1、需要先修改merge得到line_json方法，改成indri
+2、classifier中train方法训练得到classifier
+3、classifier中的classifier方法可得到分类估测结果和抽取结果
+
+
+每个目录下有详细的各个功能的使用方法
