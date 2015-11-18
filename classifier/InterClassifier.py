@@ -287,10 +287,3 @@ class InterClassifier:
 				list.append(ddd)
 		return (s,p,list,_seg,_ner)
 
-#class SentenceDepExtractor(BaseEstimator, TransformerMixin):
-#	def fit(self, x, y=None):
-#		return self
-#	def transform(self, posts):
-#		features = np.recarray(shape=(len(posts),),dtype=[('sentence', object), ('dep', object)])
-#		for i, text in enumerate(posts):
-#			pass
