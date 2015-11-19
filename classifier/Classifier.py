@@ -128,12 +128,12 @@ class Classifier:
 					])),
 					('dep', Pipeline([
 						('selector', ItemSelector(key='dep')),
-						('tfidf', FeatureHasher(n_features=2**8,input_type='dict')),
+						('tfidf', FeatureHasher(n_features=2**7,input_type='dict')),
 					])),
 					('sentence', Pipeline([
 						('selector', ItemSelector(key='sentence')),
 						('tfidf', TfidfVectorizer()),
-						('best', TruncatedSVD(n_components=50)),
+						('best', TruncatedSVD(n_components=2**10)),
 					])),
 				],
 				# weight components in FeatureUnion

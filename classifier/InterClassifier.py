@@ -103,13 +103,13 @@ class InterClassifier:
 			ddd.append(lll)
 			countner = []
 			for id in xrange(len(seg)):
-				if (ner[id]!="NOR") or (dep[id]=='HED_0'):
+				if ner[id] == "PERSON" or ner[id] == "RQST_PER" or (dep[id]=='HED_0'):
 					countner.append(str(id+1))
 			lll=collections.OrderedDict()
 			for id in xrange(len(seg)):
 				ddeepp = dep[id].split('_')[0]
 				#if ner[id] == (self.relation[tag.decode('utf-8')])[1]:
-				if ner[id] != "NOR":
+				if ner[id] == "PERSON" or ner[id] == "RQST_PER":
 					lll[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
 				else:
 					if (dep[id].split('_')[1] in countner) or (dep[id]=='HED_0'):
