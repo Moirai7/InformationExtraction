@@ -139,7 +139,7 @@ class Process:
 		else:
 			(res,res_info)=self._fanhua_extract(iden)
 		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_tuple',identify=iden)
-		self.c = Classifier.Classifier(test=False,type='VotingClassifier',vec='featurehash',genre='n_tuple',identify=iden)
+		self.c = Classifier.Classifier(test=False,type='VotingClassifier',vec='union',genre='n_tuple',identify=iden)
 		#self.c = Classifier.Classifier(test=False,vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
@@ -162,7 +162,7 @@ class Process:
 				elif line[1] == 'fuqin':
 					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸"], 500, 40, 10]}\'`'
 				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 1000, 40, 10]}\'`'
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 500, 40, 10]}\'`'
 				elif line[1] == 'nvyou':
 					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友"], 500, 40, 10]}\'`'
 				elif line[1] == 'nanyou':
@@ -201,7 +201,7 @@ class Process:
 				elif line[1] == 'fuqin':
 					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸","'+line[2]+'"], 500, 40, 10]}\'`'
 				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈","'+line[2]+'"], 1000, 40, 10]}\'`'
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈","'+line[2]+'"], 500, 40, 10]}\'`'
 				elif line[1] == 'nvyou':
 					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友","'+line[2]+'"], 500, 40, 10]}\'`'
 				elif line[1] == 'nanyou':
@@ -260,7 +260,7 @@ class Process:
 		return (res,res_info)
 
 	def _proc_call_shell(self,iden):
-		self.c = Classifier.Classifier(vec='featurehash',genre='n_tuple',identify=iden)
+		self.c = Classifier.Classifier(vec='union',genre='n_tuple',identify=iden)
 		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
 		all=0
@@ -417,7 +417,8 @@ if __name__ == '__main__':
 	elif test == 'train':
 		print test
 		#p._fanhua_extract(identify)
-		p._train_data(identify,res='emma')
+		#p._train_data(identify,res='emma')
+		p._train_data(identify)
 	end = time.clock()
 	end2 = time.time()
 	print end-start

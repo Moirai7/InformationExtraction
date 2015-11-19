@@ -15,6 +15,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier,GradientBoostingClassifier,VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_selection import SelectKBest
+from sklearn.pipeline import Pipeline,FeatureUnion
 from sklearn.decomposition import PCA
 import numpy
 import math
@@ -133,8 +134,8 @@ class Classifier:
 				],
 				# weight components in FeatureUnion
 				transformer_weights={
-					'sentence': 0.8,
-					'dep': 0.5,
+					'sentence': 0.4,
+					'dep': 0.6,
 				},
 			)),
 		])
@@ -374,7 +375,7 @@ class Classifier:
 			     info=sys.exc_info() 
 			     print info[0],":",info[1]
 		      	     print 'read wrong (except):'+'\t'.join(line)
-		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an)
+		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an=an)
 
 	def test_verify_indri(self,_lines,lines_info):
 		#just count
