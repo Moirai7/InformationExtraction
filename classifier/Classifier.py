@@ -257,6 +257,8 @@ class Classifier:
 			vec = self._vectorize_hash(words)
 		elif self.vec =='dictvec':
 			vec = self._vectorize_dict(words)
+		elif self.vec == 'union':
+			vec = self._vectorize_union(words)
 		vec = self.normalizer.transform(vec)
 		pred = clf.predict(vec.toarray())
 		score = accuracy_score(p, pred)
@@ -317,6 +319,84 @@ class Classifier:
 			print 'len list ==0'
 			return []
 		return list
+
+	def test_train_indri(self,l,lines_info):
+		lines =[]
+		tags =[]
+		newwords=[]
+		for line in l:
+			try:
+				line = line.split('\t')
+				tags.append(line[1])
+				newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
+				lines.append(line[3].strip())
+			except Exception,e:
+				traceback.print_exc()
+		clf = self._train(lines_info,newwords,tags=tags)
+		from sklearn.externals import joblib
+		if self.identify == 'muqin':
+			joblib.dump(clf,'classifier/train_data/muqin_logic_dep.train')
+		elif self.identify == 'fuqin':
+			joblib.dump(clf,'classifier/train_data/fuqin_logic_dep.train')
+		elif self.identify == 'erzi':
+			joblib.dump(clf,'classifier/train_data/erzi_logic_dep.train')
+		elif self.identify == 'nver':
+			joblib.dump(clf,'classifier/train_data/nver_logic_dep.train')
+		elif self.identify == 'nvyou':
+			joblib.dump(clf,'classifier/train_data/nvyou_logic_dep.train')
+		elif self.identify == 'nanyou':
+			joblib.dump(clf,'classifier/train_data/nanyou_logic_dep.train')
+		elif self.identify == 'zhangfu':
+			joblib.dump(clf,'classifier/train_data/zhangfu_logic_dep.train')
+		elif self.identify == 'qizi':
+			joblib.dump(clf,'classifier/train_data/qizi_logic_dep.train')
+		print clf
+
+	def test_test_indri(self,_lines,lines_info):
+		lines=[]
+		tags=[]
+		newwords=[]
+		htmls=[]
+		an = '' 
+		for line in _lines:
+		     try:
+			line = line.split('\t')
+			if len(line)<4:
+				#print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
+				continue
+			tags.append(line[1])
+			an = line[2]
+			htmls.append(line[4].strip())
+			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
+			if line[3].strip()!='':
+				lines.append(line[3].strip())
+		     except :
+			     info=sys.exc_info() 
+			     print info[0],":",info[1]
+		      	     print 'read wrong (except):'+'\t'.join(line)
+		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an)
+
+	def test_verify_indri(self,_lines,lines_info):
+		#just count
+		#using classifier
+		tags=[]
+		newwords=[]
+		for line in _lines:
+		     try:
+			line = line.split('\t')
+			if len(line)<4:
+				#print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
+				continue
+			tags.append(line[1])
+			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
+		     except:
+			info=sys.exc_info()
+		#print 'Process Data start'
+		(s,p,words,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
+		if len(words)<2:
+			return (0,0)
+		#print 'Classifier start'
+		return self.classifier_get_score(s,p,words,_seg,self.clf)
 
 	#count the answer of a relation
 	def statistics(self,newwords,tags,segs,ners,deps):
@@ -429,84 +509,6 @@ class Classifier:
 						strs += '\t'+line
 				list.append(strs)
 		return list
-
-	def test_train_indri(self,l,lines_info):
-		lines =[]
-		tags =[]
-		newwords=[]
-		for line in l:
-			try:
-				line = line.split('\t')
-				tags.append(line[1])
-				newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-				lines.append(line[3].strip())
-			except Exception,e:
-				traceback.print_exc()
-		clf = self._train(lines_info,newwords,tags=tags)
-		from sklearn.externals import joblib
-		if self.identify == 'muqin':
-			joblib.dump(clf,'classifier/train_data/muqin_logic_dep.train')
-		elif self.identify == 'fuqin':
-			joblib.dump(clf,'classifier/train_data/fuqin_logic_dep.train')
-		elif self.identify == 'erzi':
-			joblib.dump(clf,'classifier/train_data/erzi_logic_dep.train')
-		elif self.identify == 'nver':
-			joblib.dump(clf,'classifier/train_data/nver_logic_dep.train')
-		elif self.identify == 'nvyou':
-			joblib.dump(clf,'classifier/train_data/nvyou_logic_dep.train')
-		elif self.identify == 'nanyou':
-			joblib.dump(clf,'classifier/train_data/nanyou_logic_dep.train')
-		elif self.identify == 'zhangfu':
-			joblib.dump(clf,'classifier/train_data/zhangfu_logic_dep.train')
-		elif self.identify == 'qizi':
-			joblib.dump(clf,'classifier/train_data/qizi_logic_dep.train')
-		print clf
-
-	def test_test_indri(self,_lines,lines_info):
-		lines=[]
-		tags=[]
-		newwords=[]
-		htmls=[]
-		an = '' 
-		for line in _lines:
-		     try:
-			line = line.split('\t')
-			if len(line)<4:
-				#print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
-				continue
-			tags.append(line[1])
-			an = line[2]
-			htmls.append(line[4].strip())
-			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-			if line[3].strip()!='':
-				lines.append(line[3].strip())
-		     except :
-			     info=sys.exc_info() 
-			     print info[0],":",info[1]
-		      	     print 'read wrong (except):'+'\t'.join(line)
-		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an)
-
-	def test_verify_indri(self,_lines,lines_info):
-		#just count
-		#using classifier
-		tags=[]
-		newwords=[]
-		for line in _lines:
-		     try:
-			line = line.split('\t')
-			if len(line)<4:
-				#print 'read wrong ('+str(len(line))+'):'+'\t'.join(line)
-				continue
-			tags.append(line[1])
-			newwords.append((line[0],(self.relation[line[1].decode('utf-8')])[0]))
-		     except:
-			info=sys.exc_info()
-		#print 'Process Data start'
-		(s,p,words,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
-		if len(words)<2:
-			return (0,0)
-		#print 'Classifier start'
-		return self.classifier_get_score(s,p,words,_seg,self.clf)
 
 if __name__ == '__main__':
 	c = Classifier(test=False,genre='n_tuple')
