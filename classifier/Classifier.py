@@ -92,8 +92,8 @@ class Classifier:
 		#self.biaodian = ["、",",","，",".","。","|","；","_","：",":","”","“"]
 		pass
 
-	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None):
-		return self.ic._process_data_indri(lines_info,newwords,tags,htmls)
+	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None,union=False):
+		return self.ic._process_data_indri(lines_info,newwords,tags,htmls,union)
 
 	def _vectorize_HashingVectorizer(self,words):
 		vec = HashingVectorizer(n_features=2**20)
@@ -117,10 +117,28 @@ class Classifier:
 		return pos_vectorized
 
 	def _vectorize_union(self,words):
-		pca = PCA(n_components=2)
-		selection = SelectKBest(k=1)
-		combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
-		pos_vectorized = combined_features.fit(X, y).transform(X)
+		pipeline = Pipeline([
+			('SentenceDep', SentenceDepExtractor()),
+			('union', FeatureUnion(
+				transformer_list=[
+					('sentence', Pipeline([
+						('selector', ItemSelector(key='sentence')),
+						('tfidf', TfidfVectorizer(min_df=50)),
+						('best', TruncatedSVD(n_components=50)),
+					])),
+					('dep', Pipeline([
+						('selector', ItemSelector(key='body')),
+						('tfidf', FeatureHasher(n_features=2**8,input_type='pair')),
+					])),
+				],
+				# weight components in FeatureUnion
+				transformer_weights={
+					'sentence': 0.8,
+					'dep': 0.5,
+				},
+			)),
+		])
+		return pipeline.fit(words).transform(words)
 
 	def _train_clf(self,vec,tag):
 		if self.type =='gaussiannb':
@@ -169,26 +187,26 @@ class Classifier:
 			vec = self._vectorize_hash(words)
 		elif self.vec =='dictvec':
 			vec = self._vectorize_dict(words)
-		elif self.vec =='union':
+		elif self.vec == 'union':
 			vec = self._vectorize_union(words)
 		normalizer = preprocessing.Normalizer().fit(vec)
-                import cPickle as pickle
-                if self.identify == 'muqin':
-                                pickle.dump(normalizer,open('classifier/train_data/muqin_norm.txt', 'wb'))
-                elif self.identify == 'fuqin':
-                                pickle.dump(normalizer,open('classifier/train_data/fuqin_norm.txt', 'wb'))
-                elif self.identify == 'erzi':
-                                pickle.dump(normalizer,open('classifier/train_data/erzi_norm.txt', 'wb'))
-                elif self.identify == 'nver': 
-                                pickle.dump(normalizer,open('classifier/train_data/nver_norm.txt', 'wb'))
-                elif self.identify == 'nvyou':
-                                pickle.dump(normalizer,open('classifier/train_data/nvyou_norm.txt', 'wb'))
-                elif self.identify == 'nanyou':
-                                pickle.dump(normalizer,open('classifier/train_data/nanyou_norm.txt', 'wb'))
-                elif self.identify == 'zhangfu':
-                                pickle.dump(normalizer,open('classifier/train_data/zhangfu_norm.txt', 'wb'))
-                elif self.identify == 'qizi':
-                                pickle.dump(normalizer,open('classifier/train_data/qizi_norm.txt', 'wb'))
+		import cPickle as pickle
+		if self.identify == 'muqin':
+			pickle.dump(normalizer,open('classifier/train_data/muqin_norm.txt', 'wb'))
+		elif self.identify == 'fuqin':
+			pickle.dump(normalizer,open('classifier/train_data/fuqin_norm.txt', 'wb'))
+		elif self.identify == 'erzi':
+			pickle.dump(normalizer,open('classifier/train_data/erzi_norm.txt', 'wb'))
+		elif self.identify == 'nver': 
+			pickle.dump(normalizer,open('classifier/train_data/nver_norm.txt', 'wb'))
+		elif self.identify == 'nvyou':
+			pickle.dump(normalizer,open('classifier/train_data/nvyou_norm.txt', 'wb'))
+		elif self.identify == 'nanyou':
+			pickle.dump(normalizer,open('classifier/train_data/nanyou_norm.txt', 'wb'))
+		elif self.identify == 'zhangfu':
+			pickle.dump(normalizer,open('classifier/train_data/zhangfu_norm.txt', 'wb'))
+		elif self.identify == 'qizi':
+			pickle.dump(normalizer,open('classifier/train_data/qizi_norm.txt', 'wb'))
 		#pickle.dump(normalizer,open('test/train_norm.txt', 'wb'))
 		vec = normalizer.transform(vec)
 		print len(words)
@@ -202,6 +220,8 @@ class Classifier:
 			vec = self._vectorize_hash(words)
 		elif self.vec =='dictvec':
 			vec = self._vectorize_dict(words)
+		elif self.vec == 'union':
+			vec = self._vectorize_union(words)
 		vec = self.normalizer.transform(vec)   
 		pred = clf.predict(vec.toarray())
 		dec = clf.predict_proba(vec.toarray())
@@ -245,7 +265,10 @@ class Classifier:
 		return (score,len(pred))
 
 	def _train(self,lines_info,newwords,tags):
-		(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
+		if self.vec == 'union':
+			(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags,union=True)
+		else:
+			(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
 		import cPickle as pickle
 		if self.identify == 'muqin':
 			f = open('classifier/train_tag_muqin_dep.txt', 'wb')             
@@ -489,3 +512,24 @@ if __name__ == '__main__':
 	c = Classifier(test=False,genre='n_tuple')
 	c.test_train()
 	#c.test()
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class SentenceDepExtractor(BaseEstimator, TransformerMixin):
+	def fit(self, x, y=None):
+		return self
+	def transform(self, posts):
+		features = np.recarray(shape=(len(posts),),dtype=[('sentence', object), ('dep', object)])
+		features['sentence'][i] = posts[0,len(posts)-2]
+		features['dep'][i] = posts[len(posts)-1]
+		return features
+
+class ItemSelector(BaseEstimator, TransformerMixin):
+	def __init__(self, key):
+		self.key = key
+
+	def fit(self, x, y=None):
+		return self
+
+	def transform(self, data_dict):
+		return data_dict[self.key]
+
