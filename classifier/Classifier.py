@@ -4,7 +4,7 @@ import sys
 sys.path.append("..")
 from sklearn import metrics
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
-from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer,TfidfVectorizer
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier,Gradient
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import Pipeline,FeatureUnion
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA,TruncatedSVD
 import numpy
 import math
 import collections
@@ -122,20 +122,25 @@ class Classifier:
 			('SentenceDep', SentenceDepExtractor()),
 			('union', FeatureUnion(
 				transformer_list=[
-					('sentence', Pipeline([
-						('selector', ItemSelector(key='sentence')),
-						('tfidf', TfidfVectorizer(min_df=50)),
-						('best', TruncatedSVD(n_components=50)),
+					('line', Pipeline([
+						('selector', ItemSelector(key='line')),
+						('dict',  DictVectorizer()),
 					])),
 					('dep', Pipeline([
-						('selector', ItemSelector(key='body')),
-						('tfidf', FeatureHasher(n_features=2**8,input_type='pair')),
+						('selector', ItemSelector(key='dep')),
+						('tfidf', FeatureHasher(n_features=2**8,input_type='dict')),
+					])),
+					('sentence', Pipeline([
+						('selector', ItemSelector(key='sentence')),
+						('tfidf', TfidfVectorizer()),
+						('best', TruncatedSVD(n_components=50)),
 					])),
 				],
 				# weight components in FeatureUnion
 				transformer_weights={
-					'sentence': 0.4,
-					'dep': 0.6,
+					'line' : 0.3,
+					'sentence': 0.2,
+					'dep': 0.5,
 				},
 			)),
 		])
@@ -521,9 +526,12 @@ class SentenceDepExtractor(BaseEstimator, TransformerMixin):
 	def fit(self, x, y=None):
 		return self
 	def transform(self, posts):
-		features = np.recarray(shape=(len(posts),),dtype=[('sentence', object), ('dep', object)])
-		features['sentence'][i] = posts[0,len(posts)-2]
-		features['dep'][i] = posts[len(posts)-1]
+		features = numpy.recarray(shape=(len(posts),),dtype=[('sentence', object), ('line',object),('dep', object)])
+		for i,dep in enumerate(posts):
+			features['dep'][i] = dep[0]
+			features['line'][i] = dep[1]
+			features['sentence'][i] = dep[2]
+		print 'SentenceDepExtractor'
 		return features
 
 class ItemSelector(BaseEstimator, TransformerMixin):
@@ -534,5 +542,6 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 		return self
 
 	def transform(self, data_dict):
+		print self.key
 		return data_dict[self.key]
 

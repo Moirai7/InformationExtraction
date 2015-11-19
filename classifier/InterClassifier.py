@@ -39,6 +39,105 @@ class InterClassifier:
 		_html =[]
 		_deps=[]
 		list = []
+		for i in xrange(len(lines_info)):
+			(line_seg,line_pos,line_ner,line_dep) = lines_info[i]
+			if tags is not None:
+				tag = tags[i]
+				nw = newwords[i][0].decode('utf-8')
+				k = line_ner.count((self.relation[tag.decode('utf-8')])[1])
+				if k==0 :
+					continue
+				elif k==1:
+					if (self.relation[tag.decode('utf-8')])[1] == (self.relation[tag.decode('utf-8')])[1]:
+						continue
+			else:
+				return
+			seg = line_seg.split('\t')
+			pos = line_pos.split('\t')
+			ner = line_ner.split('\t')
+			dep = line_dep.split('\t')
+			pnw = -1
+			if nw in seg:
+				pnw = seg.index(nw) 
+			else:
+				for ds in xrange(len(seg)):
+					if seg[ds].find(nw):
+						pnw=ds
+			pt = -1
+			for nn in self.newwords2:
+				if nn in seg:
+					pt = seg.index(nn)
+					break
+				else:
+					for ds in xrange(len(seg)):
+						if seg[ds].find(nn):
+							pt = ds
+			if pt==-1 or pnw==-1:
+				print ' '.join(seg).encode('utf-8')
+				continue
+			ddd = []
+			lll=collections.OrderedDict()
+			lll['Nun']=line_pos.count('n')
+			lll['Nud']=line_pos.count('\tr\t')
+			lll['Nuv']=line_pos.count('v')
+			if pnw<=pt:
+				lll['Seq']=1
+				lll['Dis']=line_seg.count('\t',pnw,pt)
+				ss = seg[pnw:pt]
+				pp = '\t'.join(pos[pnw:pt])
+				lll['tag']=len(set(ss).intersection(set(self.biaodian)))
+				lll['spd']=pp.count('\tr\t')
+				lll['spn']=pp.count('n')
+				lll['spv']=pp.count('v')
+				lll['spz']=pp.count('\tu\t')
+			else:
+				lll['Seq']=0
+				lll['Dis']=line_seg.count('\t',pt,pnw)
+				ss = seg[pt:pnw]
+				pp = '\t'.join(pos[pnw:pt])
+				lll['tag']=len(set(ss).intersection(set(self.biaodian)))
+				lll['spd']=pp.count('\tr\t')
+				lll['spn']=pp.count('n')
+				lll['spv']=pp.count('v')
+				lll['spz']=pp.count('\tu\t')
+			ddd.append(lll)
+			countner = []
+			for id in xrange(len(seg)):
+				if (ner[id]!="NOR") or (dep[id]=='HED_0'):
+					countner.append(str(id+1))
+			lll=collections.OrderedDict()
+			for id in xrange(len(seg)):
+				ddeepp = dep[id].split('_')[0]
+				#if ner[id] == (self.relation[tag.decode('utf-8')])[1]:
+				if ner[id] != "NOR":
+					lll[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
+				else:
+					if (dep[id].split('_')[1] in countner) or (dep[id]=='HED_0'):
+						lll[ddeepp]=self.pos_tagger[pos[id]]
+						continue
+			ddd.append(lll)
+			ddd.append(' '.join(seg))
+			s.append(nw)
+			p.append(tag)
+			_seg.append(seg)
+			_ner.append(ner)
+			_deps.append(dep)
+			if htmls!=None:
+				_html.append(htmls[i])
+			list.append(ddd)
+		if htmls!=None:
+			return (s,p,list,_seg,_ner,_html,_deps)
+		return (s,p,list,_seg,_ner)
+
+		#this function get info from indri
+	def _process_data_indri_backup(self,lines_info,newwords,tags=None,htmls=None,union=False):
+		s = []
+		p = []
+		_seg = []
+		_ner = []
+		_html =[]
+		_deps=[]
+		list = []
 		list_sen = []
 		for i in xrange(len(lines_info)):
 			(line_seg,line_pos,line_ner,line_dep) = lines_info[i]
