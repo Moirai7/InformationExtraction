@@ -379,8 +379,8 @@ if __name__ == '__main__':
 	elif test == 'train':
 		print test
 		#p._fanhua_extract(identify)
-		#p._train_data(identify,res='emma')
-		p._train_data(identify)
+		p._train_data(identify,res='emma')
+		#p._train_data(identify)
 	end = time.clock()
 	end2 = time.time()
 	print end-start

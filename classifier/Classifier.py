@@ -192,7 +192,7 @@ class Classifier:
 		normalizer = preprocessing.Normalizer().fit(vec)
 		strs = 'classifier/train_data/'+self.identify+'_norm.txt'
 		print strs
-		pickle.dump(normalizer,open(str, 'wb'))
+		pickle.dump(strs,open(str, 'wb'))
 		vec = normalizer.transform(vec)
 		print len(words)
 		print len(p)
