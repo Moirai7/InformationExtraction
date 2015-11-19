@@ -22,6 +22,7 @@ import math
 import collections
 #from merge import Merge
 #from dep import Dep
+import cPickle as pickle
 import json
 import traceback
 #should not use the class right now,i need to change the method _process_data to let the test data can get answer accurately
@@ -34,6 +35,7 @@ class Classifier:
 		self.vec = vec
 		self.type = type
 		self.identify=identify
+		self.test = test
 		if identify == 'muqin':
 			self.newwords2=[u"\u5988\u5988",u"\u6bcd\u4eb2"]#muqin
 		elif identify == 'fuqin':
@@ -54,40 +56,24 @@ class Classifier:
 		import re
 		self.de = re.compile(u"[\u4e00-\u9fa5]")
 		self.relation = {u'fuqin':('PERSON','PERSON'),u'erzi':('PERSON','PERSON'),u'nver':('PERSON','PERSON'),u'nvyou':('PERSON','PERSON'),u'nanyou':('PERSON','PERSON'),u'muqin':('PERSON','PERSON'),u'emma':('PERSON','PERSON'),u'zhangfu':('PERSON','PERSON'),u'qizi':('PERSON','PERSON'),u'\u5973\u53cb':('PERSON','PERSON'),u'\u5973\u513f':('PERSON','PERSON'),u'\u59bb\u5b50':('PERSON','PERSON'),u'\u4e08\u592b':('PERSON','PERSON'),u'\u524d\u592b':('PERSON','PERSON'),u'\u7236\u4eb2':('PERSON','PERSON'),u'\u8eab\u9ad8':('PERSON','HEIGHT'),u'\u751f\u65e5':('PERSON','DATE'),u'\u64ad\u51fa\u65f6\u95f4':('FILM','TIME'),u'\u4e3b\u9898\u66f2':('FILM','MUSIC')}
-		from InterClassifier import InterClassifier
-		self.ic = InterClassifier(genre,self.newwords2)
 		if test:
 			import cPickle as pickle
 			from sklearn.externals import joblib
-			if self.identify == 'muqin':
-				self.normalizer=pickle.load(open('classifier/train_data/muqin_norm.txt', 'rb'))
-				#self.normalizer=pickle.load(open('classifier/test/train_norm.txt', 'rb'))
-                	        #self.clf = joblib.load('classifier/test/fanhua_logic_position.train')
-                	        self.clf = joblib.load('classifier/train_data/muqin_logic_dep.train')
-               	 	elif self.identify == 'fuqin':
-				self.normalizer=pickle.load(open('classifier/train_data/fuqin_norm.txt', 'rb'))
-                 	        self.clf = joblib.load('classifier/train_data/fuqin_logic_dep.train')
-              		elif self.identify == 'erzi':
-				self.normalizer=pickle.load(open('classifier/train_data/erzi_norm.txt', 'rb'))
-                        	self.clf = joblib.load('classifier/train_data/erzi_logic_dep.train')
-                	elif self.identify == 'nver':
-				self.normalizer=pickle.load(open('classifier/train_data/nver_norm.txt', 'rb'))
-                	        self.clf = joblib.load('classifier/train_data/nver_logic_dep.train')
-                	elif self.identify == 'nvyou':
-				self.normalizer=pickle.load(open('classifier/train_data/nvyou_norm.txt', 'rb'))
-                        	self.clf = joblib.load('classifier/train_data/nvyou_logic_dep.train')
-                	elif self.identify == 'nanyou':
-				self.normalizer=pickle.load(open('classifier/train_data/nanyou_norm.txt', 'rb'))
-                        	self.clf = joblib.load('classifier/train_data/nanyou_logic_dep.train')
-                	elif self.identify == 'zhangfu':
-				self.normalizer=pickle.load(open('classifier/train_data/zhangfu_norm.txt', 'rb'))
-                        	self.clf = joblib.load('classifier/train_data/zhangfu_logic_dep.train')
-                	elif self.identify == 'qizi':
-				self.normalizer=pickle.load(open('classifier/train_data/qizi_norm.txt', 'rb'))
-                       	 	self.clf = joblib.load('classifier/train_data/qizi_logic_dep.train')
-			#self.clf = joblib.load('classifier/train_data/nanyou.train')
-			#self.wf = open('result_fanhua_change','ab')
+			strs = 'classifier/train_data/'+self.identify+'_norm.txt'
+			print strs
+			self.normalizer=pickle.load(open(strs, 'rb'))
+			strs = 'classifier/train_data/'+self.identify+'_logic_dep.train'
+			print strs
+			self.clf = joblib.load(strs)
 			print self.clf
+		file = open('stopwords.txt','rb')
+		line = file.readline()
+		self.stop=[]
+		while line:
+			self.stop.append(line.strip('\r\n').strip('\n'))
+			line = file.readline()
+		from InterClassifier import InterClassifier
+		self.ic = InterClassifier(genre,self.newwords2,self.stop)
 		self.speci = ["、",",","，","&"]
 		self.biaodian = [u"\u3001",",",u"\uff0c",".",u"\u3002","|",u"\uff1b","_",u"\uff1a",":",u"\u201d",u"\u201c"]
 		#self.biaodian = ["、",",","，",".","。","|","；","_","：",":","”","“"]
@@ -118,6 +104,14 @@ class Classifier:
 		return pos_vectorized
 
 	def _vectorize_union(self,words):
+		strs = 'classifier/train_data/'+self.identify+'_tfidf.txt'
+		print strs
+		if self.test:
+			tv=pickle.load(open(strs, 'rb'))
+			vocabulary = tv.vocabulary_
+			strs=None
+		else:
+			vocabulary = None
 		pipeline = Pipeline([
 			('SentenceDep', SentenceDepExtractor()),
 			('union', FeatureUnion(
@@ -132,7 +126,7 @@ class Classifier:
 					])),
 					('sentence', Pipeline([
 						('selector', ItemSelector(key='sentence')),
-						('tfidf', TfidfVectorizer()),
+						('tfidf', SaveTfidfVectorizer(strs,vocabulary = vocabulary,stop_words=self.stop)),
 						('best', TruncatedSVD(n_components=2**10)),
 					])),
 				],
@@ -196,24 +190,9 @@ class Classifier:
 		elif self.vec == 'union':
 			vec = self._vectorize_union(words)
 		normalizer = preprocessing.Normalizer().fit(vec)
-		import cPickle as pickle
-		if self.identify == 'muqin':
-			pickle.dump(normalizer,open('classifier/train_data/muqin_norm.txt', 'wb'))
-		elif self.identify == 'fuqin':
-			pickle.dump(normalizer,open('classifier/train_data/fuqin_norm.txt', 'wb'))
-		elif self.identify == 'erzi':
-			pickle.dump(normalizer,open('classifier/train_data/erzi_norm.txt', 'wb'))
-		elif self.identify == 'nver': 
-			pickle.dump(normalizer,open('classifier/train_data/nver_norm.txt', 'wb'))
-		elif self.identify == 'nvyou':
-			pickle.dump(normalizer,open('classifier/train_data/nvyou_norm.txt', 'wb'))
-		elif self.identify == 'nanyou':
-			pickle.dump(normalizer,open('classifier/train_data/nanyou_norm.txt', 'wb'))
-		elif self.identify == 'zhangfu':
-			pickle.dump(normalizer,open('classifier/train_data/zhangfu_norm.txt', 'wb'))
-		elif self.identify == 'qizi':
-			pickle.dump(normalizer,open('classifier/train_data/qizi_norm.txt', 'wb'))
-		#pickle.dump(normalizer,open('test/train_norm.txt', 'wb'))
+		strs = 'classifier/train_data/'+self.identify+'_norm.txt'
+		print strs
+		pickle.dump(normalizer,open(str, 'wb'))
 		vec = normalizer.transform(vec)
 		print len(words)
 		print len(p)
@@ -278,30 +257,12 @@ class Classifier:
 		else:
 			(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
 		import cPickle as pickle
-		if self.identify == 'muqin':
-			f = open('classifier/train_tag_muqin_dep.txt', 'wb')             
-			f2 = open('classifier/train_hash_muqin_dep.txt', 'wb')             
-		elif self.identify == 'fuqin':
-			f = open('classifier/train_tag_fuqin_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_fuqin_dep.txt', 'wb')
-		elif self.identify == 'erzi':
-			f = open('classifier/train_tag_erzi_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_erzi_dep.txt', 'wb')
-		elif self.identify == 'nver':
-			f = open('classifier/train_tag_nver_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_nver_dep.txt', 'wb')
-		elif self.identify == 'nvyou':
-			f = open('classifier/train_tag_nvyou_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_nvyou_dep.txt', 'wb')
-		elif self.identify == 'nanyou':
-			f = open('classifier/train_tag_nanyou_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_nanyou_dep.txt', 'wb')
-		elif self.identify == 'zhangfu':
-			f = open('classifier/train_tag_zhangfu_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_zhangfu_dep.txt', 'wb')
-		elif self.identify == 'qizi':
-			f = open('classifier/train_tag_qizi_dep.txt', 'wb')
-			f2 = open('classifier/train_hash_qizi_dep.txt', 'wb')
+		strs = 'classifier/train_tag_'+self.identify+'_dep.txt'
+		print strs
+		f = open(strs, 'wb') 
+		strs = 'classifier/train_hash_'+self.identify+'_dep.txt'
+		print strs
+		f2 = open(strs, 'wb')
 		pickle.dump(word,f2)
 		f2.close()
 		pickle.dump(p,f)
@@ -340,22 +301,9 @@ class Classifier:
 				traceback.print_exc()
 		clf = self._train(lines_info,newwords,tags=tags)
 		from sklearn.externals import joblib
-		if self.identify == 'muqin':
-			joblib.dump(clf,'classifier/train_data/muqin_logic_dep.train')
-		elif self.identify == 'fuqin':
-			joblib.dump(clf,'classifier/train_data/fuqin_logic_dep.train')
-		elif self.identify == 'erzi':
-			joblib.dump(clf,'classifier/train_data/erzi_logic_dep.train')
-		elif self.identify == 'nver':
-			joblib.dump(clf,'classifier/train_data/nver_logic_dep.train')
-		elif self.identify == 'nvyou':
-			joblib.dump(clf,'classifier/train_data/nvyou_logic_dep.train')
-		elif self.identify == 'nanyou':
-			joblib.dump(clf,'classifier/train_data/nanyou_logic_dep.train')
-		elif self.identify == 'zhangfu':
-			joblib.dump(clf,'classifier/train_data/zhangfu_logic_dep.train')
-		elif self.identify == 'qizi':
-			joblib.dump(clf,'classifier/train_data/qizi_logic_dep.train')
+		strs = 'classifier/train_data/'+self.identify+'_logic_dep.train'
+		print strs
+		joblib.dump(clf,strs)
 		print clf
 
 	def test_test_indri(self,_lines,lines_info):
@@ -545,3 +493,24 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 		print self.key
 		return data_dict[self.key]
 
+class SaveTfidfVectorizer(TfidfVectorizer):
+	def __init__(self,key=None, input='content', encoding='utf-8',decode_error='strict', strip_accents=None, lowercase=True,preprocessor=None, tokenizer=None, analyzer='word',stop_words=None, token_pattern=r"(?u)\b\w\w+\b",ngram_range=(1, 1), max_df=1.0, min_df=1,max_features=None, vocabulary=None, binary=False,dtype=numpy.int64, norm='l2', use_idf=True, smooth_idf=True,sublinear_tf=False):
+		super(SaveTfidfVectorizer,self).__init__(input=input, encoding=encoding, decode_error=decode_error,strip_accents=strip_accents, lowercase=lowercase,preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,stop_words=stop_words, token_pattern=token_pattern,ngram_range=ngram_range, max_df=max_df, min_df=min_df,max_features=max_features, vocabulary=vocabulary, binary=binary,dtype=dtype,norm=norm, use_idf=use_idf, smooth_idf=smooth_idf,sublinear_tf=sublinear_tf)
+		self.key = key
+		
+	def fit(self, raw_documents, y=None):
+		return super(SaveTfidfVectorizer, self).fit(raw_documents)
+
+	def fit_transform(self, raw_documents, y=None):
+		clf = super(SaveTfidfVectorizer, self).fit_transform(raw_documents)
+		if self.key is not None:
+			pickle.dump(super(SaveTfidfVectorizer,self),open(self.key, 'wb'))
+			print 'saved in fit_transform'
+		return clf
+
+	def transform(self, raw_documents, copy=True):
+		clf = super(SaveTfidfVectorizer, self).transform(raw_documents)
+		if self.key is not None:
+			pickle.dump(super(SaveTfidfVectorizer,self),open(self.key, 'wb'))
+			print 'saved in transform'
+		return clf

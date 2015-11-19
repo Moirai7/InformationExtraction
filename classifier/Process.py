@@ -108,30 +108,10 @@ class Process:
 	def _train_data(self,iden,res=None,res_info=None):
 		if res==None:
 			import cPickle as pickle
-			if iden == 'muqin':
-				f = open('classifier/train_res_muqin.txt', 'rb')
-				f2 = open('classifier/train_info_muqin.txt', 'rb')
-			elif iden == 'fuqin':
-				f = open('classifier/train_res_fuqin.txt', 'rb')
-				f2 = open('classifier/train_info_fuqin.txt', 'rb')
-			elif iden == 'erzi': 
-				f = open('classifier/train_res_erzi.txt', 'rb')
-				f2 = open('classifier/train_info_erzi.txt', 'rb')
-			elif iden == 'nver':
-				f = open('classifier/train_res_nver.txt', 'rb')
-				f2 = open('classifier/train_info_nver.txt', 'rb')
-			elif iden == 'nvyou':
-				f = open('classifier/train_res_nvyou.txt', 'rb')
-				f2 = open('classifier/train_info_nvyou.txt', 'rb')
-			elif iden == 'nanyou':
-				f = open('classifier/train_res_nanyou.txt', 'rb')
-				f2 = open('classifier/train_info_nanyou.txt', 'rb')
-			elif iden == 'zhangfu':
-				f = open('classifier/train_res_zhangfu.txt', 'rb')
-				f2 = open('classifier/train_info_zhangfu.txt', 'rb')
-			elif iden == 'qizi':
-				f = open('classifier/train_res_qizi.txt', 'rb')
-				f2 = open('classifier/train_info_qizi.txt', 'rb')
+			strs = 'classifier/train_res_'+iden+'.txt'
+			f=open(strs)
+			strs = 'classifier/train_info_'+iden+'.txt'
+			f2=open(strs)
 			res=pickle.load(f)
 			f.close()
 			res_info=pickle.load(f2)
@@ -139,7 +119,7 @@ class Process:
 		else:
 			(res,res_info)=self._fanhua_extract(iden)
 		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_tuple',identify=iden)
-		self.c = Classifier.Classifier(test=False,type='VotingClassifier',vec='union',genre='n_dict',identify=iden)
+		self.c = Classifier.Classifier(test=False,type='gaussiannb',vec='union',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(test=False,vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
@@ -229,30 +209,12 @@ class Process:
                                 traceback.print_exc()
 				continue
 		import cPickle as pickle
-		if iden == 'muqin':
-			f = open('classifier/train_res_muqin.txt', 'wb')
-			f2 = open('classifier/train_info_muqin.txt', 'wb')
-		elif iden == 'fuqin':
-			f = open('classifier/train_res_fuqin.txt', 'wb')
-			f2 = open('classifier/train_info_fuqin.txt', 'wb')
-		elif iden == 'erzi': 
-			f = open('classifier/train_res_erzi.txt', 'wb')
-			f2 = open('classifier/train_info_erzi.txt', 'wb')
-		elif iden == 'nver':
-			f = open('classifier/train_res_nver.txt', 'wb')
-			f2 = open('classifier/train_info_nver.txt', 'wb')
-		elif iden == 'nvyou':
-			f = open('classifier/train_res_nvyou.txt', 'wb')
-			f2 = open('classifier/train_info_nvyou.txt', 'wb')
-		elif iden == 'nanyou':
-			f = open('classifier/train_res_nanyou.txt', 'wb')
-			f2 = open('classifier/train_info_nanyou.txt', 'wb')
-		elif iden == 'zhangfu':
-			f = open('classifier/train_res_zhangfu.txt', 'wb')
-			f2 = open('classifier/train_info_zhangfu.txt', 'wb')
-		elif iden == 'qizi':
-			f = open('classifier/train_res_qizi.txt', 'wb')
-			f2 = open('classifier/train_info_qizi.txt', 'wb')
+		strs = 'classifier/train_res_'+self.identify+'.txt'
+		print strs
+		f=open(strs,'wb')
+		strs = 'classifier/train_info_'+self.identify+'.txt'
+		print strs
+		f2=open(strs,'wb')
 		pickle.dump(res,f)
 		f.close()
 		pickle.dump(res_info,f2)
