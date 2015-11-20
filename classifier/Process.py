@@ -119,10 +119,99 @@ class Process:
 		else:
 			(res,res_info)=self._fanhua_extract(iden)
 		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_tuple',identify=iden)
+		#self.c = Classifier.Classifier(test=False,type='VotingClassifier',vec='union',genre='n_dict',identify=iden)
 		self.c = Classifier.Classifier(test=False,type='gaussiannb',vec='union',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(test=False,vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
+
+	def _proc_call_shell(self,iden):
+		self.c = Classifier.Classifier(type='gaussiannb',vec='union',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
+		all=0
+		current=0
+		for line in sys.stdin:
+			line = line.strip('\r\n').strip('\n').split('\t')
+			try:
+				line[0] = line[0].strip() 
+				#line[1] ='nvyou'
+				#line.append('emma')
+				#if line[1]!='muqin':
+				#	break
+				if line[1] == 'qizi':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","妻子 夫妇 老婆 夫人"], 500, 40, 10]}\'`'
+				elif line[1] == 'zhangfu':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","丈夫 老公 夫妇"], 500, 40, 10]}\'`'
+				elif line[1] == 'erzi':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","儿子"], 500, 40, 10]}\'`'
+				elif line[1] == 'nver':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女儿"], 500, 40, 10]}\'`'
+				elif line[1] == 'fuqin':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸"], 500, 40, 10]}\'`'
+				elif line[1] == 'muqin':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 500, 40, 10]}\'`'
+				elif line[1] == 'nvyou':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友"], 500, 40, 10]}\'`'
+				elif line[1] == 'nanyou':
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","男友 男朋友"], 500, 40, 10]}\'`'
+				(llll,lines_info) = self._process_json(strs,line)
+				if llll is None:
+					continue
+				list = self.c.test_test_indri(llll,lines_info)
+				if len(list)==0:
+					continue
+				#if line[2] != 'emma':
+				if True:
+					asa = 0
+					if len(list) != 0:
+						all+=1
+					for l in list:
+						print 'result'+l.encode('utf-8')
+						if l.split('\t')[2]==line[2].decode('utf-8'):
+							asa=1
+					if asa==1:
+						current+=1
+						print 'current : '+line[0]+'\t'+line[1]+'\t'+line[2]
+					else:
+						print 'wrong(241) : '+line[0]+'\t'+line[1]+'\t'+line[2]
+					print 'all :'+str(all)
+					print 'current :'+str(current)
+				else:
+					asa=0
+					if len(list) != 0:
+						all+=1
+					else:
+						continue
+					print 'high score current : '+line[0]+'\t'+line[1]+'\t'+line[2]
+					asa=0
+					for l in list:
+						tline = l.encode('utf-8').split('\t')
+						if tline[2] == line[2]:
+							current+=1
+							asa=1
+						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+						(llll,lines_info) = self._process_json(strs,tline)
+						if llll is None:
+							continue	
+						#print tline[0]+' '+tline[2]
+						(score,lens) = self.c.test_verify_indri(llll,lines_info)
+						print 'high score result( score '+str(score)+' length '+str(lens)+') : '+l.encode('utf-8')
+					if asa==0:
+						print 'still wrong!'
+					print 'all :'+str(all)
+					print 'current :'+str(current)
+			except IndexError:
+				print 'waiting...'
+				print 'wrong(269) : '+line[0]+'\t'+line[1]+'\t'+line[2]
+				traceback.print_exc()
+				continue
+			except Exception,e:
+				print 'wrong(273) : '+line[0]+'\t'+line[1]+'\t'+line[2]
+				traceback.print_exc()  
+				continue
+		print 'all :'+str(all)
+		print 'current :'+str(current)
 
 	def _fanhua_extract(self,iden):
 		res =[]
@@ -209,10 +298,10 @@ class Process:
                                 traceback.print_exc()
 				continue
 		import cPickle as pickle
-		strs = 'classifier/train_res_'+self.identify+'.txt'
+		strs = 'classifier/train_res_'+iden+'.txt'
 		print strs
 		f=open(strs,'wb')
-		strs = 'classifier/train_info_'+self.identify+'.txt'
+		strs = 'classifier/train_info_'+iden+'.txt'
 		print strs
 		f2=open(strs,'wb')
 		pickle.dump(res,f)
@@ -220,93 +309,7 @@ class Process:
 		pickle.dump(res_info,f2)
 		f2.close()
 		return (res,res_info)
-
-	def _proc_call_shell(self,iden):
-		self.c = Classifier.Classifier(vec='union',genre='n_dict',identify=iden)
-		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
-		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
-		all=0
-		current=0
-		for line in sys.stdin:
-			line = line.strip('\r\n').strip('\n').split('\t')
-			try:
-				line[0] = line[0].strip() 
-				#line[1] ='nvyou'
-				#line.append('emma')
-				#if line[1]!='muqin':
-				#	break
-				if line[1] == 'qizi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","妻子 夫妇 老婆 夫人"], 500, 40, 10]}\'`'
-				elif line[1] == 'zhangfu':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","丈夫 老公 夫妇"], 500, 40, 10]}\'`'
-				elif line[1] == 'erzi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","儿子"], 500, 40, 10]}\'`'
-				elif line[1] == 'nver':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女儿"], 500, 40, 10]}\'`'
-				elif line[1] == 'fuqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸"], 500, 40, 10]}\'`'
-				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 500, 40, 10]}\'`'
-				elif line[1] == 'nvyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友"], 500, 40, 10]}\'`'
-				elif line[1] == 'nanyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","男友 男朋友"], 500, 40, 10]}\'`'
-				(llll,lines_info) = self._process_json(strs,line)
-				if llll is None:
-					continue
-				list = self.c.test_test_indri(llll,lines_info)
-				#if line[2] != 'emma':
-				if True:
-					asa = 0
-					if len(list) != 0:
-						all+=1
-					for l in list:
-						print 'result'+l.encode('utf-8')
-						if l.split('\t')[2]==line[2].decode('utf-8'):
-							asa=1
-					if asa==1:
-						current+=1
-						print 'current : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					else:
-						print 'wrong(241) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					print 'all :'+str(all)
-					print 'current :'+str(current)
-				else:
-					asa=0
-					if len(list) != 0:
-						all+=1
-					else:
-						continue
-					print 'high score current : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					asa=0
-					for l in list:
-						tline = l.encode('utf-8').split('\t')
-						if tline[2] == line[2]:
-							current+=1
-							asa=1
-						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
-						(llll,lines_info) = self._process_json(strs,tline)
-						if llll is None:
-							continue	
-						#print tline[0]+' '+tline[2]
-						(score,lens) = self.c.test_verify_indri(llll,lines_info)
-						print 'high score result( score '+str(score)+' length '+str(lens)+') : '+l.encode('utf-8')
-					if asa==0:
-						print 'still wrong!'
-					print 'all :'+str(all)
-					print 'current :'+str(current)
-			except IndexError:
-				print 'waiting...'
-				print 'wrong(269) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-				traceback.print_exc()
-				continue
-			except Exception,e:
-				print 'wrong(273) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-				traceback.print_exc()  
-				continue
-		print 'all :'+str(all)
-		print 'current :'+str(current)
-
+		
 	def _process_json(self,strs,line):
 		strs=commands.getoutput(strs).split('\n')
 		js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
@@ -379,8 +382,8 @@ if __name__ == '__main__':
 	elif test == 'train':
 		print test
 		#p._fanhua_extract(identify)
-		p._train_data(identify,res='emma')
-		#p._train_data(identify)
+		#p._train_data(identify,res='emma')
+		p._train_data(identify)
 	end = time.clock()
 	end2 = time.time()
 	print end-start

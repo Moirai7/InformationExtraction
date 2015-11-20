@@ -59,10 +59,10 @@ class Classifier:
 		if test:
 			import cPickle as pickle
 			from sklearn.externals import joblib
-			strs = 'classifier/train_data/'+self.identify+'_norm.txt'
+			strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_norm.txt'
 			print strs
 			self.normalizer=pickle.load(open(strs, 'rb'))
-			strs = 'classifier/train_data/'+self.identify+'_logic_dep.train'
+			strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_logic_dep.train'
 			print strs
 			self.clf = joblib.load(strs)
 			print self.clf
@@ -79,8 +79,11 @@ class Classifier:
 		#self.biaodian = ["、",",","，",".","。","|","；","_","：",":","”","“"]
 		pass
 
-	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None,union=False):
-		return self.ic._process_data_indri(lines_info,newwords,tags,htmls,union)
+	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None):
+		if self.vec == 'union':
+			return self.ic._process_data_indri(lines_info,newwords,tags,htmls)
+		else:
+			return self.ic._process_data_indri_old(lines_info,newwords,tags,htmls)
 
 	def _vectorize_HashingVectorizer(self,words):
 		vec = HashingVectorizer(n_features=2**20)
@@ -104,7 +107,7 @@ class Classifier:
 		return pos_vectorized
 
 	def _vectorize_union(self,words):
-		strs = 'classifier/train_data/'+self.identify+'_tfidf.txt'
+		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_tfidf.txt'
 		print strs
 		if self.test:
 			tv=pickle.load(open(strs, 'rb'))
@@ -127,7 +130,7 @@ class Classifier:
 					('sentence', Pipeline([
 						('selector', ItemSelector(key='sentence')),
 						('tfidf', SaveTfidfVectorizer(strs,vocabulary = vocabulary,stop_words=self.stop)),
-						('best', TruncatedSVD(n_components=2**10)),
+						('best', TruncatedSVD(n_components=100)),
 					])),
 				],
 				# weight components in FeatureUnion
@@ -138,7 +141,7 @@ class Classifier:
 				},
 			)),
 		])
-		return pipeline.fit(words).transform(words)
+		return pipeline.fit_transform(words)
 
 	def _train_clf(self,vec,tag):
 		if self.type =='gaussiannb':
@@ -181,6 +184,7 @@ class Classifier:
 		return clf
 
 	def train_using_process(self,p,words):
+		print 'start vec'
 		if self.vec =='hashingvec':
 			vec = self._vectorize_HashingVectorizer(words)
 		elif self.vec =='featurehash':
@@ -189,13 +193,23 @@ class Classifier:
 			vec = self._vectorize_dict(words)
 		elif self.vec == 'union':
 			vec = self._vectorize_union(words)
+		print 'vec successfully!'
 		normalizer = preprocessing.Normalizer().fit(vec)
-		strs = 'classifier/train_data/'+self.identify+'_norm.txt'
+		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_norm.txt'
 		print strs
-		pickle.dump(strs,open(str, 'wb'))
+		pickle.dump(normalizer,open(strs, 'wb'))
 		vec = normalizer.transform(vec)
+		strs = 'classifier/'+self.identify+'_'+self.type+'_union.txt'
+		print strs
+		pickle.dump(vec,open(strs, 'wb'))
 		print len(words)
 		print len(p)
+		return self._train_clf(vec,p)
+	
+	def train_using_process_(self,p,words):
+		from sklearn.externals import joblib
+		vec = joblib.load('classifier/muqin_gaussiannb_union.txt')
+		print vec
 		return self._train_clf(vec,p)
 
 	def classifier_using_process(self,s,p,words,_seg,_ner,clf,htmls,an,deps):
@@ -208,6 +222,7 @@ class Classifier:
 		elif self.vec == 'union':
 			vec = self._vectorize_union(words)
 		vec = self.normalizer.transform(vec)   
+		print vec
 		pred = clf.predict(vec.toarray())
 		dec = clf.predict_proba(vec.toarray())
 		#dec = clf.decision_function(vec.toarray())
@@ -252,10 +267,7 @@ class Classifier:
 		return (score,len(pred))
 
 	def _train(self,lines_info,newwords,tags):
-		if self.vec == 'union':
-			(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags,union=True)
-		else:
-			(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
+		(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
 		import cPickle as pickle
 		strs = 'classifier/train_tag_'+self.identify+'_dep.txt'
 		print strs
@@ -268,7 +280,7 @@ class Classifier:
 		pickle.dump(p,f)
 		f.close()
 		#quit(0)
-		return self.train_using_process(p,word)
+		return self.train_using_process_(p,word)
 
 	def _test(self,lines_info,newwords,tags,htmls,an):
 		#print 'Process Data start'
@@ -301,7 +313,7 @@ class Classifier:
 				traceback.print_exc()
 		clf = self._train(lines_info,newwords,tags=tags)
 		from sklearn.externals import joblib
-		strs = 'classifier/train_data/'+self.identify+'_logic_dep.train'
+		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_logic_dep.train'
 		print strs
 		joblib.dump(clf,strs)
 		print clf
@@ -326,7 +338,6 @@ class Classifier:
 				lines.append(line[3].strip())
 		     except :
 			     info=sys.exc_info() 
-			     print info[0],":",info[1]
 		      	     print 'read wrong (except):'+'\t'.join(line)
 		return self._test(lines_info,newwords,tags=tags,htmls=htmls,an=an)
 

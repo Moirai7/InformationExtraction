@@ -26,7 +26,7 @@ class InterClassifier:
 		#self.d = Dep()
 		pass
 	#this function get info from indri
-	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None,union=False):
+	def _process_data_indri(self,lines_info,newwords,tags=None,htmls=None):
 		s = []
 		p = []
 		_seg = []
@@ -124,8 +124,8 @@ class InterClassifier:
 			return (s,p,list,_seg,_ner,_html,_deps)
 		return (s,p,list,_seg,_ner)
 
-		#this function get info from indri
-	def _process_data_indri_backup(self,lines_info,newwords,tags=None,htmls=None,union=False):
+	#this function get info from indri
+	def _process_data_indri_old(self,lines_info,newwords,tags=None,htmls=None):
 		s = []
 		p = []
 		_seg = []
@@ -133,7 +133,6 @@ class InterClassifier:
 		_html =[]
 		_deps=[]
 		list = []
-		list_sen = []
 		for i in xrange(len(lines_info)):
 			(line_seg,line_pos,line_ner,line_dep) = lines_info[i]
 			if tags is not None:
@@ -170,7 +169,6 @@ class InterClassifier:
 			if pt==-1 or pnw==-1:
 				print ' '.join(seg).encode('utf-8')
 				continue
-			list_sen.append(' '.join(seg))
 			if self.genre=='n_dict' or self.genre=='dict':
 				ddd = collections.OrderedDict()
 			elif self.genre=='line' or self.genre=='n_tuple':
@@ -290,8 +288,6 @@ class InterClassifier:
 				list.append(' '.join(ddd))
 			elif self.genre=='n_dict' or self.genre=='dict' or self.genre=='n_tuple':
 				list.append(ddd)
-		if union:
-			list.append(list_sen)
 		if htmls!=None:
 			return (s,p,list,_seg,_ner,_html,_deps)
 		return (s,p,list,_seg,_ner)
