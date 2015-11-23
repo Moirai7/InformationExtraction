@@ -118,15 +118,15 @@ class Process:
 			f2.close()
 		else:
 			(res,res_info)=self._fanhua_extract(iden)
-		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_tuple',identify=iden)
-		#self.c = Classifier.Classifier(test=False,type='VotingClassifier',vec='union',genre='n_dict',identify=iden)
-		self.c = Classifier.Classifier(test=False,type='gaussiannb',vec='union',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		self.c = Classifier.Classifier(test=False,type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(test=False,type='gaussiannb',vec='union',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(test=False,vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
 
 	def _proc_call_shell(self,iden):
-		self.c = Classifier.Classifier(type='gaussiannb',vec='union',genre='n_dict',identify=iden)
+		self.c = Classifier.Classifier(type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
 		all=0

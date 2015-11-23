@@ -59,7 +59,9 @@ class Classifier:
 		if test:
 			import cPickle as pickle
 			from sklearn.externals import joblib
+			#TODO
 			strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_norm.txt'
+			#strs = 'classifier/train_data/muqin_VotingClassifier_norm.txt'
 			print strs
 			self.normalizer=pickle.load(open(strs, 'rb'))
 			strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_logic_dep.train'
@@ -107,7 +109,9 @@ class Classifier:
 		return pos_vectorized
 
 	def _vectorize_union(self,words):
+		#TODO
 		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_tfidf.txt'
+		#strs = 'classifier/train_data/muqin_VotingClassifier_tfidf.txt'
 		print strs
 		if self.test:
 			tv=pickle.load(open(strs, 'rb'))
@@ -135,8 +139,8 @@ class Classifier:
 				],
 				# weight components in FeatureUnion
 				transformer_weights={
-					'line' : 0.3,
-					'sentence': 0.2,
+					'line' : 0.4,
+					'sentence': 0.1,
 					'dep': 0.5,
 				},
 			)),
@@ -174,6 +178,7 @@ class Classifier:
 			#clf3 = GaussianNB()
 			#clf = VotingClassifier(estimators=[('dt', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft',weights=[3,3,1])
 			clf = VotingClassifier(estimators=[('dt', clf1), ('rf', clf2),('lr',clf3),('gb',clf4),('ac',clf5)], voting='soft',weights=[2,2,3,3,3])
+			#clf = VotingClassifier(estimators=[('rf', clf2),('lr',clf3),('gb',clf4),('ac',clf5)], voting='soft',weights=[2,3,3,3])
 		print 'calu'
 		if self.type =='gaussiannb' or self.type=='GradientBoostingClassifier':
 			clf.fit(vec.toarray(), numpy.asarray(tag))
@@ -199,17 +204,17 @@ class Classifier:
 		print strs
 		pickle.dump(normalizer,open(strs, 'wb'))
 		vec = normalizer.transform(vec)
-		strs = 'classifier/'+self.identify+'_'+self.type+'_union.txt'
-		print strs
-		pickle.dump(vec,open(strs, 'wb'))
+		#strs = 'classifier/'+self.identify+'_'+self.type+'_union.txt'
+		#print strs
+		#pickle.dump(vec,open(strs, 'wb'))
 		print len(words)
 		print len(p)
 		return self._train_clf(vec,p)
 	
 	def train_using_process_(self,p,words):
 		from sklearn.externals import joblib
-		vec = joblib.load('classifier/muqin_gaussiannb_union.txt')
-		print vec
+		vec = joblib.load('classifier/muqin_VotingClassifier_union.txt')
+		print len(p)
 		return self._train_clf(vec,p)
 
 	def classifier_using_process(self,s,p,words,_seg,_ner,clf,htmls,an,deps):
@@ -222,8 +227,12 @@ class Classifier:
 		elif self.vec == 'union':
 			vec = self._vectorize_union(words)
 		vec = self.normalizer.transform(vec)   
-		print vec
-		pred = clf.predict(vec.toarray())
+		check = False
+		try:
+			pred = clf.predict(vec.toarray())
+		except:
+			traceback.print_exc()  
+			check = True
 		dec = clf.predict_proba(vec.toarray())
 		#dec = clf.decision_function(vec.toarray())
 		m_s=[]
@@ -239,7 +248,7 @@ class Classifier:
 			print dec[i]
 			#if p[i] == pred[i] and dec[i]>25.0:
 			#if p[i] == pred[i] and dec[i][1]>0.5:
-			if p[i]==pred[i]:
+			if p[i]==pred[i] or check:
 				#print s[i].encode('utf-8')+' '+str(i+1)+' '+pred[i]+' '+''.join(_seg[i]).encode('utf-8')
 				m_s.append(s[i])
 				m_p.append(p[i])
@@ -268,19 +277,20 @@ class Classifier:
 
 	def _train(self,lines_info,newwords,tags):
 		(s,p,word,_seg,_ner) = self._process_data_indri(lines_info,newwords,tags=tags)
-		import cPickle as pickle
-		strs = 'classifier/train_tag_'+self.identify+'_dep.txt'
-		print strs
-		f = open(strs, 'wb') 
-		strs = 'classifier/train_hash_'+self.identify+'_dep.txt'
-		print strs
-		f2 = open(strs, 'wb')
-		pickle.dump(word,f2)
-		f2.close()
-		pickle.dump(p,f)
-		f.close()
+		#import cPickle as pickle
+		#strs = 'classifier/train_tag_'+self.identify+'_dep.txt'
+		#print strs
+		#f = open(strs, 'wb') 
+		#strs = 'classifier/train_hash_'+self.identify+'_dep.txt'
+		#print strs
+		#f2 = open(strs, 'wb')
+		#pickle.dump(word,f2)
+		#f2.close()
+		#pickle.dump(p,f)
+		#f.close()
 		#quit(0)
-		return self.train_using_process_(p,word)
+		#TODO
+		return self.train_using_process(p,word)
 
 	def _test(self,lines_info,newwords,tags,htmls,an):
 		#print 'Process Data start'
@@ -487,8 +497,8 @@ class SentenceDepExtractor(BaseEstimator, TransformerMixin):
 	def transform(self, posts):
 		features = numpy.recarray(shape=(len(posts),),dtype=[('sentence', object), ('line',object),('dep', object)])
 		for i,dep in enumerate(posts):
-			features['dep'][i] = dep[0]
-			features['line'][i] = dep[1]
+			features['dep'][i] = dep[1]
+			features['line'][i] = dep[0]
 			features['sentence'][i] = dep[2]
 		print 'SentenceDepExtractor'
 		return features

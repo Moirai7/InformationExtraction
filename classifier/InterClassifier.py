@@ -71,7 +71,7 @@ class InterClassifier:
 				print ' '.join(seg).encode('utf-8')
 				continue
 			ddd = []
-			lll=collections.OrderedDict()
+			lll={}
 			lll['Nun']=line_pos.count('n')
 			lll['Nud']=line_pos.count('\tr\t')
 			lll['Nuv']=line_pos.count('v')
