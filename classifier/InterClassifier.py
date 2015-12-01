@@ -55,18 +55,20 @@ class InterClassifier:
 			if nw in seg:
 				pnw = seg.index(nw) 
 			else:
-				for ds in xrange(len(seg)):
-					if seg[ds].find(nw):
-						pnw=ds
+				continue
+				#for ds in xrange(len(seg)):
+				#	if seg[ds].find(nw):
+				#		pnw=ds
 			pt = -1
 			for nn in self.newwords2:
 				if nn in seg:
 					pt = seg.index(nn)
 					break
 				else:
-					for ds in xrange(len(seg)):
-						if seg[ds].find(nn):
-							pt = ds
+					continue
+					#for ds in xrange(len(seg)):
+					#	if seg[ds].find(nn):
+					#		pt = ds
 			if pt==-1 or pnw==-1:
 				print ' '.join(seg).encode('utf-8')
 				continue
@@ -105,11 +107,17 @@ class InterClassifier:
 				ddeepp = dep[id].split('_')[0]
 				#if ner[id] == (self.relation[tag.decode('utf-8')])[1]:
 				if ner[id] == "PERSON" or ner[id] == "RQST_PER":
-					lll[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
+					#if seg[id] == nw:
+					#	lll[ner[id]+'_S_'+ddeepp]=self.pos_tagger[pos[id]]
+					#elif seg[id] in self.newwords2:
+					#	lll[ner[id]+'_P_'+ddeepp]=self.pos_tagger[pos[id]]
+					#else:
+						lll[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
 				else:
 					if (dep[id].split('_')[1] in countner) or (dep[id]=='HED_0'):
 						lll[ddeepp]=self.pos_tagger[pos[id]]
 						continue
+			#print (line_seg+'\n'+line_dep+'\n'+line_ner+'\n'+ddd).encode('utf-8')
 			ddd.append(lll)
 			ddd.append(' '.join(seg))
 			s.append(nw)
@@ -154,20 +162,23 @@ class InterClassifier:
 			if nw in seg:
 				pnw = seg.index(nw) 
 			else:
-				for ds in xrange(len(seg)):
-					if seg[ds].find(nw):
-						pnw=ds
+				continue
+				#for ds in xrange(len(seg)):
+				#	if seg[ds].find(nw):
+				#		pnw=ds
 			pt = -1
 			for nn in self.newwords2:
 				if nn in seg:
 					pt = seg.index(nn)
 					break
 				else:
-					for ds in xrange(len(seg)):
-						if seg[ds].find(nn):
-							pt = ds
+					continue
+					#for ds in xrange(len(seg)):
+					#	if seg[ds].find(nn):
+					#		pt = ds
 			if pt==-1 or pnw==-1:
-				print ' '.join(seg).encode('utf-8')
+				#print nw.encode('utf-8')
+				#print ' '.join(seg).encode('utf-8')
 				continue
 			if self.genre=='n_dict' or self.genre=='dict':
 				ddd = collections.OrderedDict()
@@ -237,17 +248,36 @@ class InterClassifier:
 					ddd['spz']=pp.count('\tu\t')
 			countner = []
 			for id in xrange(len(seg)):
-				if (ner[id]!="NOR") or (dep[id]=='HED_0'):
+				#if (ner[id]!="NOR") or (dep[id]=='HED_0'):
+				if ner[id] == "PERSON" or ner[id] == "RQST_PER" or (dep[id]=='HED_0'):
 					countner.append(str(id+1))
+			ren=0
+			rqst=0
 			for id in xrange(len(seg)):
 				ddeepp = dep[id].split('_')[0]
 				#if ner[id] == (self.relation[tag.decode('utf-8')])[1]:
-				if ner[id] != "NOR":
+				#if ner[id] != "NOR":
+				if ner[id] == "PERSON" or ner[id] == "RQST_PER":
 					if self.genre=='dict':
 						ddd['word'+str(id)]=(self.relation[tag.decode('utf-8')])[1]
 						ddd['pos'+str(id)]=pos[id]
 					elif self.genre=='n_dict':
-						ddd[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
+						if seg[id] == nw:
+							ddd[ner[id]+'_S_'+ddeepp]=self.pos_tagger[pos[id]]
+							#ddd[ner[id]+'_S_'+ddeepp+'_'+str(ren)]=self.pos_tagger[pos[id]]
+							#ren+=1
+						elif seg[id] in self.newwords2:
+							ddd[ner[id]+'_P_'+ddeepp]=self.pos_tagger[pos[id]]
+							#ddd[ner[id]+'_P_'+ddeepp+'_'+str(rqst)]=self.pos_tagger[pos[id]]
+							#rqst+=1
+						elif ner[id] == "PERSON":
+							ddd[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
+							#ddd[ner[id]+'_'+ddeepp+'_'+str(ren)]=self.pos_tagger[pos[id]]
+							#ren+=1
+						else:
+							ddd[ner[id]+'_'+ddeepp]=self.pos_tagger[pos[id]]
+							#ddd[ner[id]+'_'+ddeepp+'_'+str(rqst)]=self.pos_tagger[pos[id]]
+							#rqst+=1
 					elif self.genre=='n_tuple':
 						lan = (ner[id]+'_'+ddeepp,self.pos_tagger[pos[id]])
 						#lan = (ner[id],self.pos_tagger[pos[id]])

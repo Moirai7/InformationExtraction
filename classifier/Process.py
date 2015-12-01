@@ -118,15 +118,16 @@ class Process:
 			f2.close()
 		else:
 			(res,res_info)=self._fanhua_extract(iden)
-		#self.c = Classifier.Classifier(test=False,type='RandomForestClassifier',vec='featurehash',genre='n_dict',identify=iden)
-		self.c = Classifier.Classifier(test=False,type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		self.c = Classifier.Classifier(test=False,type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(test=False,type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(test=False,type='gaussiannb',vec='union',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(test=False,vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
 
 	def _proc_call_shell(self,iden):
-		self.c = Classifier.Classifier(type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		#self.c = Classifier.Classifier(type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
 		all=0
@@ -162,7 +163,7 @@ class Process:
 				if len(list)==0:
 					continue
 				#if line[2] != 'emma':
-				if True:
+				if False:
 					asa = 0
 					if len(list) != 0:
 						all+=1
@@ -193,10 +194,17 @@ class Process:
 						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
 						(llll,lines_info) = self._process_json(strs,tline)
 						if llll is None:
+							print 'high score result( small orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
 							continue	
 						#print tline[0]+' '+tline[2]
+						if (float(tline[3])<3.0 and len(tline)<10):
+							print 'high score result(delete orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							continue
 						(score,lens) = self.c.test_verify_indri(llll,lines_info)
-						print 'high score result( score '+str(score)+' length '+str(lens)+') : '+l.encode('utf-8')
+						if score<0.6 or lens<50 :
+							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						else:
+							print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
 					if asa==0:
 						print 'still wrong!'
 					print 'all :'+str(all)
@@ -323,11 +331,11 @@ class Process:
 			lines_info.append(self._process(l['pass_analyze']))
 			lines.append(l['passage'].encode('utf-8'))
 		if len(lines)<1:
-			print 'too small info from indri '+line[0]+'\t'+line[1]+'\t'+line[2]
+			#print 'too small info from indri '+line[0]+'\t'+line[1]+'\t'+line[2]
 			return (None,None)
 		(lines,lines_info,htmls) = self._semi_without(lines,lines_info,htmls)
 		if len(lines)<1:
-			print 'too small info from indri '+line[0]+'\t'+line[1]+'\t'+line[2]
+			#print 'too small info from indri '+line[0]+'\t'+line[1]+'\t'+line[2]
 			return (None,None)
 		llll=[]
 		for idd in xrange(len(lines)):
@@ -383,7 +391,15 @@ if __name__ == '__main__':
 		print test
 		#p._fanhua_extract(identify)
 		#p._train_data(identify,res='emma')
-		p._train_data(identify)
+		#p._train_data(identify)
+		p._train_data('muqin')
+		p._train_data('fuqin')
+		p._train_data('qizi')
+		p._train_data('zhangfu')
+		p._train_data('nver')
+		p._train_data('erzi')
+		p._train_data('nanyou')
+		p._train_data('nvyou')
 	end = time.clock()
 	end2 = time.time()
 	print end-start

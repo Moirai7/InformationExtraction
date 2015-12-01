@@ -77,6 +77,7 @@ class Classifier:
 		from InterClassifier import InterClassifier
 		self.ic = InterClassifier(genre,self.newwords2,self.stop)
 		self.speci = ["、",",","，","&"]
+		self.speci2 = ["-",":","》","并","从","图","、",",","(",")","【","】","-","|","‖","☆ ","与","/","及","；","为","也","被","，","&","·","_","的","等","]","”","吗","#","《","吧","在","是","?","？","很","：","说","都","饰","和","而","里","（","[","“","）","."]
 		self.biaodian = [u"\u3001",",",u"\uff0c",".",u"\u3002","|",u"\uff1b","_",u"\uff1a",":",u"\u201d",u"\u201c"]
 		#self.biaodian = ["、",",","，",".","。","|","；","_","：",":","”","“"]
 		pass
@@ -241,11 +242,8 @@ class Classifier:
 		m_ner=[]
 		m_dep=[]
 		for i in xrange(len(p)):
-			if dec[i][1]<0.5:
-				print 'test info : '+s[i].encode('utf-8')+' '+an+' emma '+htmls[i]+' '+''.join(_seg[i]).encode('utf-8')
-			else:
-				print 'test info : '+s[i].encode('utf-8')+' '+an+' '+pred[i]+' '+htmls[i]+' '+''.join(_seg[i]).encode('utf-8')
-			print dec[i]
+			print 'test info : '+s[i].encode('utf-8')+' '+an+' '+pred[i]+' '+htmls[i]+' '+''.join(_seg[i]).encode('utf-8')
+			#print dec[i]
 			#if p[i] == pred[i] and dec[i]>25.0:
 			#if p[i] == pred[i] and dec[i][1]>0.5:
 			if p[i]==pred[i] or check:
@@ -296,12 +294,10 @@ class Classifier:
 		#print 'Process Data start'
 		(s,p,words,_seg,_ner,htmls,deps) = self._process_data_indri(lines_info,newwords,tags=tags,htmls=htmls)
 		if len(words)<2:
-			print ' words <2 too small'
 			return []
 		#print 'Classifier start'
 		(s,p,_seg,_ner,deps) = self.classifier_using_process(s,p,words,_seg,_ner,self.clf,htmls,an,deps)
 		if len(p)<2:
-			print 'classifier <2 too small'
 			return []
 		list=self.statistics(s,p,_seg,_ner,deps)
 		if len(list)==0:
@@ -391,24 +387,28 @@ class Classifier:
 					index_p = seg.index(nn)
 					break
 				else:
-					for ds in xrange(len(seg)):
-						if seg[ds].find(nn):
-							index_p = ds
-						else:
+					#for ds in xrange(len(seg)):
+					#	if seg[ds].find(nn):
+					#		index_p = ds
+					#	else:
 							index_p=-1
 			if index_p == -1:
+				print ' '.join(seg).encode('utf-8')
 				print 'None P '
+				continue
 			if newwords[i] in seg:
 				index_s = seg.index(newwords[i])
 			else:
-				for ds in xrange(len(seg)):
-					if seg[ds].find(newwords[i]):
-						index_s = ds
-					else:
-						index_s = -1
-				if index_s == -1:
+				#for ds in xrange(len(seg)):
+				#	if seg[ds].find(newwords[i]):
+				#		index_s = ds
+				#	else:
+				#		index_s = -1
+				#if index_s == -1:
+					print ' '.join(seg).encode('utf-8')
 					print 'None S'
-			print ' '.join(seg).encode('utf-8')+str(index_p)+','+str(index_s)
+					continue
+			#print ' '.join(seg).encode('utf-8')+str(index_p)+','+str(index_s)
 			#print ' '.join(dep).encode('utf-8')
 			_a = []
 			lianxu = 0
@@ -421,6 +421,10 @@ class Classifier:
 						if ll==0:
 							ll=len(seg[id])
 						if (seg[id] != newwords[i]) and (seg[id] not in _a)  and (ll>1) and seg[id].isdigit()==False:
+							if id<len(seg)-1 and len(seg[id])<3 and len(seg[id+1])==1 and (seg[id+1].encode('utf-8') not in self.speci2):
+								maybe = seg[id]+seg[id+1]
+							else:
+								maybe=''
 							try:
 								distance = 0.1/(math.fabs(id-index_p)+math.fabs(id-index_s))
 								if id-index_p==1 and id-index_s==2:
@@ -444,25 +448,39 @@ class Classifier:
 								#	distance+=0.5
 							except :
 								traceback.print_exc()
-								print 'math error'+newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+seg[id].encode('utf-8')+str(math.fabs(id-index_p))+' '+str(math.fabs(id-index_s))
+								#print 'math error'+newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+seg[id].encode('utf-8')+str(math.fabs(id-index_p))+' '+str(math.fabs(id-index_s))
 								continue
-							print newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+seg[id].encode('utf-8')+','+str(distance+0.15)
+							#print newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+seg[id].encode('utf-8')+','+str(distance+0.15)
+							#if maybe!='':
+								#print 'add '+newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+maybe.encode('utf-8')+','+str(distance+0.15)
 							if seg[id] in answer:
 								dict[seg[id]]+=distance+0.15
 							else:
 								dict[seg[id]]=distance+0.15
-							dict_dis[seg[id]]=distance+0.15
+							if maybe!='':
+								if maybe in answer:
+									dict[maybe]+=distance+0.15
+								else:
+									dict[maybe]=distance+0.15
 							lianxu += 1
+							dict_dis[seg[id]]=distance+0.15
 							_a.append(seg[id])
 							answer.append(seg[id])
+							if maybe!='':
+								dict_dis[maybe]=distance+0.15
+								_a.append(maybe)
+								answer.append(maybe)
 					else:
 						if seg[id].encode('utf-8') in self.speci:
 							continue
 						if lianxu>=3:
+							b=''
 							while lianxu>0:
 								asa = answer.pop()
 								dict[asa]-=dict_dis[asa]
-								lianxu -= 1
+								if b != asa[1:2]:
+									lianxu -= 1
+								b=asa
 						lianxu = 0
 		dict= sorted(dict.iteritems(), key=lambda d:d[1], reverse = True)
 		list=[]
@@ -471,10 +489,11 @@ class Classifier:
 			if max<=0:
 				return []
 		except:
+			print 'classifier 492 error'
 			return []
-		top=3
+		top=2
 		for v in dict:
-			if top>0:
+			if top>0 or v[1]>30.0:
 				if v[1] != max :
 					top-=1
 					max = top
