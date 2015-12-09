@@ -14,13 +14,13 @@ class Process:
 		#self.t = TextSim()
 		self.rels = {}
 		self.rels["erzi"] = [u"\u513f\u5b50"]    
-                self.rels["nver"] = [u"\u5973\u513f"]
-                self.rels["nanyou"] = [u"\u7537\u670b\u53cb",u"\u7537\u53cb"]
-                self.rels["nvyou"] = [u"\u5973\u670b\u53cb",u"\u5973\u53cb"]
-                self.rels["muqin"] = [u"\u5988\u5988",u"\u6bcd\u4eb2"]
-                self.rels["fuqin"] = [u"\u7238\u7238",u"\u7236\u4eb2"]
-                self.rels["qizi"] = [u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]
-                self.rels["zhangfu"] = [u"\u8001\u516c",u"\u4e08\u592b",u"\u592b\u5987"]
+		self.rels["nver"] = [u"\u5973\u513f"]
+		self.rels["nanyou"] = [u"\u7537\u670b\u53cb",u"\u7537\u53cb"]
+		self.rels["nvyou"] = [u"\u5973\u670b\u53cb",u"\u5973\u53cb"]
+		self.rels["muqin"] = [u"\u5988\u5988",u"\u6bcd\u4eb2"]
+		self.rels["fuqin"] = [u"\u7238\u7238",u"\u7236\u4eb2"]
+		self.rels["qizi"] = [u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]
+		self.rels["zhangfu"] = [u"\u8001\u516c",u"\u4e08\u592b",u"\u592b\u5987"]
 		self.q = re.compile(r'\\')
 		self.p = re.compile('<[^>]+>') 
 		self.b = re.compile('(http|ftp|https)?(:\/\/)?([\w\-_]+\.)+([\w\-:_]+/)([\w\-\.,@^=%&amp;:/~\+#]+)?')
@@ -140,27 +140,18 @@ class Process:
 				#line.append('emma')
 				#if line[1]!='muqin':
 				#	break
-				if line[1] == 'qizi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","妻子 夫妇 老婆 夫人"], 500, 40, 10]}\'`'
-				elif line[1] == 'zhangfu':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","丈夫 老公 夫妇"], 500, 40, 10]}\'`'
-				elif line[1] == 'erzi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","儿子"], 500, 40, 10]}\'`'
-				elif line[1] == 'nver':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女儿"], 500, 40, 10]}\'`'
-				elif line[1] == 'fuqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸"], 500, 40, 10]}\'`'
-				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 500, 40, 10]}\'`'
-				elif line[1] == 'nvyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友"], 500, 40, 10]}\'`'
-				elif line[1] == 'nanyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","男友 男朋友"], 500, 40, 10]}\'`'
+				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
+				for x in self.rels[line[1]]:
+					strs += x.encode('utf-8')+' '
+				strs=strs.strip()+'"], 500, 40, 10]}\'`'
+				print strs
 				(llll,lines_info) = self._process_json(strs,line)
 				if llll is None:
+					print 'indri None '+strs
 					continue
 				list = self.c.test_test_indri(llll,lines_info)
 				if len(list)==0:
+					print 'indri + test None '+strs
 					continue
 				#if line[2] != 'emma':
 				if False:
@@ -188,23 +179,32 @@ class Process:
 					asa=0
 					for l in list:
 						tline = l.encode('utf-8').split('\t')
-						if tline[2] == line[2]:
-							current+=1
-							asa=1
-						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+						#print tline[0]+' '+tline[2]
+						#if (float(tline[3])<1.0 and len(tline)<9):
+						#	print 'high score result(delete orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						#	continue	
+						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
+						for x in self.rels[line[1]]:
+							strs += x.encode('utf-8')+' '
+						strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+						print strs
+						#strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
 						(llll,lines_info) = self._process_json(strs,tline)
 						if llll is None:
 							print 'high score result( small orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
-							continue	
-						#print tline[0]+' '+tline[2]
-						if (float(tline[3])<3.0 and len(tline)<10):
-							print 'high score result(delete orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							if tline[2] == line[2]:
+								current+=1
+								asa=1
 							continue
 						(score,lens) = self.c.test_verify_indri(llll,lines_info)
-						if score<0.6 or lens<50 :
+						if score<0.5 or lens<5 :
 							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							continue
 						else:
 							print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						if tline[2] == line[2]:
+							current+=1
+							asa=1
 					if asa==0:
 						print 'still wrong!'
 					print 'all :'+str(all)
@@ -228,22 +228,11 @@ class Process:
 			line = ll.strip('\r\n').strip('\n').split('\t')
 			try:
 				line[0] = line[0].strip()
-				if line[1] == 'qizi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","妻子 夫妇 老婆 夫人"], 500, 40, 10]}\'`'
-				elif line[1] == 'zhangfu':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","丈夫 老公 夫妇"], 500, 40, 10]}\'`'
-				elif line[1] == 'erzi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","儿子"], 500, 40, 10]}\'`'
-				elif line[1] == 'nver':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女儿"], 500, 40, 10]}\'`'
-				elif line[1] == 'fuqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸"], 500, 40, 10]}\'`'
-				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈"], 500, 40, 10]}\'`'
-				elif line[1] == 'nvyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友"], 500, 40, 10]}\'`'
-				elif line[1] == 'nanyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","男友 男朋友"], 500, 40, 10]}\'`'
+				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
+				for x in self.rels[line[1]]:
+					strs += x.encode('utf-8')+' '
+				strs=strs.strip()+'"], 500, 40, 10]}\'`'
+				print strs
 				#print 'Process indri start'
 				strs=commands.getoutput(strs).split('\n')
 				js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
@@ -267,22 +256,11 @@ class Process:
 						lines_info.append(self._process(l['pass_analyze']))
 				if len(lines)<1:
 					continue
-				if line[1] == 'qizi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","妻子 夫妇 老婆 夫人","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'zhangfu':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","丈夫 老公 夫妇","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'erzi':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","儿子","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'nver':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女儿","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'fuqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","父亲 爸爸","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'muqin':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","母亲 妈妈","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'nvyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","女友 女朋友","'+line[2]+'"], 500, 40, 10]}\'`'
-				elif line[1] == 'nanyou':
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","男友 男朋友","'+line[2]+'"], 500, 40, 10]}\'`'
+				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
+				for x in self.rels[line[1]]:
+					strs += x.encode('utf-8')+' '
+				strs=strs.strip()+'","'+line[2]+'"], 500, 40, 10]}\'`'
+				print strs
 				strs=commands.getoutput(strs).split('\n')
 				js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
 				lists = js['result']['_ret']
@@ -301,6 +279,7 @@ class Process:
 				#if len(lines)<1:
 				#	continue
 			except IndexError:
+				traceback.print_exc()
 				continue
 			except Exception,e:
                                 traceback.print_exc()
@@ -320,7 +299,14 @@ class Process:
 		
 	def _process_json(self,strs,line):
 		strs=commands.getoutput(strs).split('\n')
-		js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
+		try:
+			js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
+		except:
+			print 'error'
+			#traceback.print_exc()
+			#print strs[3].replace('\r\n', '').replace('\n','').decode('utf-8', 'ignore').encode('utf-8', 'ignore')
+			#js = json.loads( unicode(strs[3],'ISO-8859-1'), strict=False )
+			js = json.loads(strs[3].replace('\r\n', '').replace('\n','').decode('utf-8', 'ignore').encode('utf-8', 'ignore') ,strict=False )
 		lists = js['result']['_ret']
 		lines_info = []
 		lines = []
@@ -392,7 +378,7 @@ if __name__ == '__main__':
 		#p._fanhua_extract(identify)
 		#p._train_data(identify,res='emma')
 		#p._train_data(identify)
-		p._train_data('muqin')
+		#p._train_data('muqin')
 		p._train_data('fuqin')
 		p._train_data('qizi')
 		p._train_data('zhangfu')
