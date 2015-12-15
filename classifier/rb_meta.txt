@@ -1,0 +1,1 @@
+{"name":"rawbase_starring", "creator":"huipan", "aliasName":"百科演员表数据", "description":"对百科演员表的数据通过和海鸥、线上、sogou等的配图融合得到最终数据", "domain":"Movies","type":"Movies","dataFormat":"jsonld", "scope":"PUBLIC", "cred":"", "host":"", "user":""}

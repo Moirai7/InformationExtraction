@@ -3,7 +3,7 @@
 import sys
 import copy
 import re
-
+import json
 month = u'(?:[0-9]+~)?[0-9]+月(?:[0-9]+日)?'
 #time = u'(?:上午)?[0-9]+[:|：](?:下午)?[0-9]+'
 time = u'(?:(?:pm)?[0-9]+[:|：][0-9]+(?:pm)?|天黑|天亮|日落|日出|(?:[0-9]+.)?[0-9]+(?:am|pm))'
@@ -63,6 +63,45 @@ def Proc_Week(tt):
 		return '6'
  	if tt==u'日' or tt==u'天' or tt==u'七' or tt==u'末':
 		return '7' 
+def Proc_Time(t1,t2):
+	t1=t1.replace('.',':').replace('am','')
+	t2=t2.replace('.',':').replace('am','')
+	if t1.find(u'pm')!=-1:
+		t1 = t1.replace(u'pm','').split(':')
+		t1[0]=str(int(t1[0])+12)
+	else:
+		t1=t1.split(':')
+	if t2.find(u'pm')!=-1:
+		t2 = t2.replace(u'pm','').split(':')
+		t2[0]=str(int(t2[0])+12)
+	else:
+		t2=t2.split(':')
+	if int(t1[0])<10 and t1[0][0]!='0':
+		t1[0]='0'+t1[0]
+	if int(t2[0])<10 and t2[0][0]!='0':
+		t2[0]='0'+t2[0]
+	#if len(t1)==2:
+	#	if int(t1[1])<10:
+	#		t1[1]='0'+t1[1]
+	#	if int(t2[1])<10:
+	#		t2[1]='0'+t2[1]
+	if len(t1)==1:
+		t1.append('00')
+		t2.append('00')
+	if t2[0]<t1[0]:
+		t2[0]=str(int(t2[0])+12)
+	return (t1[0]+':'+t1[1],t2[0]+':'+t2[1])
+def convert_utf8(obj):
+    if isinstance(obj, unicode):
+        return obj.encode('utf-8')
+    if isinstance(obj, list):
+        return [convert_utf8(val) for val in obj]
+    if isinstance(obj, dict):
+        newDict = {}
+        for key in obj.keys():
+            newDict[key.encode('utf-8')] = convert_utf8(obj[key])
+        return newDict
+    return obj
 def Price(line):
 	all=[]
 	if pt_free.match(line):
@@ -156,7 +195,7 @@ def Price(line):
 	for o in only_price:
 		prices.append(float(o[1].strip(u'元')))
 	prices.sort()
-	info['price']=str(prices[0])+u'元起'
+	info['price']=str(prices[0]).replace('.0','')+u'元起'
 	all.append(info)
 	return all
 
@@ -175,8 +214,9 @@ def Time(line):
 		info['type']='open'
 		info['hour']={}
 		if len(only_times)==1:
-			info['hour']['opentime']= only_times[0][0]
-			info['hour']['closetime']= only_times[0][1]
+			(t1,t2)=Proc_Time(only_times[0][0],only_times[0][1])
+			info['hour']['opentime']= t1
+			info['hour']['closetime']= t2
 		elif rt_day.match(line):
 			info['hour']['opentime']='09:00'
 			info['hour']['closetime']='17:00'
@@ -198,8 +238,9 @@ def Time(line):
 			info['week']['end']='7'
 			info['type']='open'
 			info['hour']={}
-			info['hour']['opentime']=x[0]
-			info['hour']['closetime']=x[1]
+			(t1,t2)=Proc_Time(x[0],x[1])
+			info['hour']['opentime']=t1
+			info['hour']['closetime']=t2
 			info['hour']['buytime']=x[3]
 			all.append(info)
 		return all
@@ -212,8 +253,9 @@ def Time(line):
 		info['week']['end']='7'
 		info['type']='open'
 		info['hour']={}
-		info['hour']['opentime']=speci_time7.group(1)
-		info['hour']['closetime']=speci_time7.group(2)
+		(t1,t2)=Proc_Time(speci_time7.group(1),speci_time7.group(2))
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
 		info['hour']['buytime']=speci_time7.group(3)
 		all.append(info)
 		return all
@@ -261,6 +303,9 @@ def Time(line):
 		else:
 			time=only_time[1]
 		info['hour']['closetime']=time
+		(t1,t2)=Proc_Time(info['hour']['opentime'],info['hour']['closetime'])
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
 		try:
 			if buy_times[0][2]!=u'':
 				time = time.split(u':')
@@ -336,8 +381,9 @@ def Time(line):
 		only_time = only_times[i]
 		info={}
 		info['hour']={}
-		info['hour']['opentime']=only_time[0]
-		info['hour']['closetime']=only_time[1]
+		(t1,t2)=Proc_Time(only_time[0],only_time[1])
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
 		try:
 			buy_time=buy_times[i]
 			if buy_time[0]==u'':
@@ -398,8 +444,9 @@ def Time(line):
 			only_time=only_times[i]
 			info={}
 			info['hour']={}
-			info['hour']['opentime']=only_time[0]
-			info['hour']['closetime']=only_time[1]
+			(t1,t2)=Proc_Time(only_time[0],only_time[1])
+			info['hour']['opentime']=t1
+			info['hour']['closetime']=t2
 			try:
 				buy_time=buy_times[0]
 				buy_time=buy_time[1]
@@ -421,99 +468,7 @@ def Time(line):
 				all.append(info)
 				info = copy.deepcopy(info)
 		return all
-	#月 月 时间
-	if len(only_times)==2 and len(month_times)==4:
-		for i in xrange(len(month_times)):
-			info={}
-			info['month']={}
-			month_time=month_times[i]
-			tt = number.findall(month_time[0])
-			info['month']['start']=Proc_Month(tt) if tt else '0101'
-			tt = number.findall(month_time[1])
-			info['month']['end']=Proc_Month(tt) if tt else '1231'
-			info['week']={}
-			info['week']['start']='1'
-			info['week']['end']='7'
-			info['type']='open'
-			info['hour']={}
-			info['hour']['opentime']= only_times[i/2][0]
-			info['hour']['closetime']= only_times[i/2][1]
-			all.append(info)
-		return all
-	#只是时间
-	only_time=rt_only_time.match(line)
-	if only_time:
-		info={}
-		info['month']={}
-		info['month']['start']='0101'
-		info['month']['end']='1231'
-		info['week']={}
-		info['week']['start']='1'
-		info['week']['end']='7'
-		info['type']='open'
-		info['hour']={}
-		info['hour']['opentime']=only_time.group(1)
-		info['hour']['closetime']=only_time.group(2)
-		all.append(info)
-		return all
-	#只是月份
-	if len(month_times)==1 and len(only_times)==0:
-		info={}
-		info['month']={}
-		tt = number.findall(month_times[0][0])
-		info['month']['start']=Proc_Month(tt) if tt else '0101'
-		tt = number.findall(month_times[0][1])
-		info['month']['end']=Proc_Month(tt) if tt else '1231'
-		info['week']={}
-		info['week']['start']='1'
-		info['week']['end']='7'
-		info['type']='open'
-		info['hour']={}
-		info['hour']['opentime']='00:00'
-		info['hour']['closetime']='24:00'
-		all.append(info)
-		return all
-	#特殊
-	speci_time=rt_speci_time2.findall(line)
-	if speci_time and len(only_times)==3 and len(speci_time)==5 and len(buy_times)==3:
-	   for i in xrange(len(only_times)):
-		only_time = only_times[i]
-		info={}
-		info['hour']={}
-		info['hour']['opentime']=only_time[0]
-		info['hour']['closetime']=only_time[1]
-		try:
-			buy_time=buy_times[i]
-			if buy_time[0]==u'':
-				buy_time=buy_time[1]
-			else:
-				buy_time=buy_time[0]
-			info['hour']['buytime']=buy_time
-		except:
-			pass
-		info['type']='open'
-		info['week']={}
-		info['week']['start']='1'
-		info['week']['end']='7'
-		info['month']={}
-		k=i
-		while k<2+i:
-		  try:
-			month_time=speci_time[i+k]
-			tt = number.findall(month_time)
-			tt1 = [tt[0]]
-			tt2 = [tt[1]]		
-		  except:
-			tt2=[tt[0]] 
-		  info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
-		  info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
-		  all.append(info)
-		  info = copy.deepcopy(info)
-		  if len(only_times)==i+1:
-			break
-		  k+=1
-	   return all
-	#特殊
+	#特殊天坛
 	speci_time3=rt_speci_time3.findall(line)
 	if speci_time3:
 	   open_time = rt_open_time.findall(speci_time3[0])
@@ -524,8 +479,9 @@ def Time(line):
 			for i in xrange(len(close_time)):
 				info={}	
 				info['hour']={}
-				info['hour']['opentime']=open_time[0]
-				info['hour']['closetime']=close_time[i]
+				(t1,t2)=Proc_Time(open_time[0],close_time[i])
+				info['hour']['opentime']=t1
+				info['hour']['closetime']=t2
 				try:
 					buy_time=buy_times2[i]
 					if buy_time[0]==u'':
@@ -563,6 +519,101 @@ def Time(line):
 				info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 				all.append(info)
 		return all
+	#月 月 时间
+	if len(only_times)==2 and len(month_times)==4:
+		for i in xrange(len(month_times)):
+			info={}
+			info['month']={}
+			month_time=month_times[i]
+			tt = number.findall(month_time[0])
+			info['month']['start']=Proc_Month(tt) if tt else '0101'
+			tt = number.findall(month_time[1])
+			info['month']['end']=Proc_Month(tt) if tt else '1231'
+			info['week']={}
+			info['week']['start']='1'
+			info['week']['end']='7'
+			info['type']='open'
+			info['hour']={}
+			(t1,t2)=Proc_Time(only_times[i/2][0],only_times[i/2][1])
+			info['hour']['opentime']= t1
+			info['hour']['closetime']= t2
+			all.append(info)
+		return all
+	#只是时间
+	only_time=rt_only_time.match(line)
+	if only_time:
+		info={}
+		info['month']={}
+		info['month']['start']='0101'
+		info['month']['end']='1231'
+		info['week']={}
+		info['week']['start']='1'
+		info['week']['end']='7'
+		info['type']='open'
+		info['hour']={}
+		(t1,t2)=Proc_Time(only_time.group(1),only_time.group(2))
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
+		all.append(info)
+		return all
+	#只是月份
+	if len(month_times)==1 and len(only_times)==0:
+		info={}
+		info['month']={}
+		tt = number.findall(month_times[0][0])
+		info['month']['start']=Proc_Month(tt) if tt else '0101'
+		tt = number.findall(month_times[0][1])
+		info['month']['end']=Proc_Month(tt) if tt else '1231'
+		info['week']={}
+		info['week']['start']='1'
+		info['week']['end']='7'
+		info['type']='open'
+		info['hour']={}
+		info['hour']['opentime']='00:00'
+		info['hour']['closetime']='24:00'
+		all.append(info)
+		return all
+	#特殊
+	speci_time=rt_speci_time2.findall(line)
+	if speci_time and len(only_times)==3 and len(speci_time)==5 and len(buy_times)==3:
+	   for i in xrange(len(only_times)):
+		only_time = only_times[i]
+		info={}
+		info['hour']={}
+		(t1,t2)=Proc_Time(only_time[0],only_time[1])
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
+		try:
+			buy_time=buy_times[i]
+			if buy_time[0]==u'':
+				buy_time=buy_time[1]
+			else:
+				buy_time=buy_time[0]
+			info['hour']['buytime']=buy_time
+		except:
+			pass
+		info['type']='open'
+		info['week']={}
+		info['week']['start']='1'
+		info['week']['end']='7'
+		info['month']={}
+		k=i
+		while k<2+i:
+		  try:
+			month_time=speci_time[i+k]
+			tt = number.findall(month_time)
+			tt1 = [tt[0]]
+			tt2 = [tt[1]]		
+		  except:
+			tt2=[tt[0]] 
+		  info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
+		  info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
+		  all.append(info)
+		  info = copy.deepcopy(info)
+		  if len(only_times)==i+1:
+			break
+		  k+=1
+	   return all
 	#特殊大
 	month_time=rt_speci_time.findall(line)
 	if month_time  :
@@ -584,8 +635,9 @@ def Time(line):
 				info['week']['start']='1'
 				info['week']['end']='7'
 			info['hour']={}
-			info['hour']['opentime']=m[3]
-			info['hour']['closetime']=m[4]
+			(t1,t2)=Proc_Time(m[3],m[4])
+			info['hour']['opentime']=t1
+			info['hour']['closetime']=t2
 			if m[5]!=u'':
 				info['hour']['buytime']=m[5]
 			if m[6]!=u'':
@@ -655,14 +707,9 @@ def Time(line):
 		enter=[]
 		out=[]
 		for x in only_times:
-			if int(x[0].split(':')[0])<10 and x[0].split(':')[0][0]!='0':
-				enter.append(u'1'+x[0])
-			else:
-				enter.append(x[0])
-			if int(x[1].split(':')[0])<10 and x[1].split(':')[0][0]!=0:
-				out.append(u'1'+x[1])
-			else:
-				out.append(x[1])
+			(t1,t2)=Proc_Time(x[0],x[1])
+			enter.append(t1)
+			out.append(t2)
 		enter.sort()
 		out.sort(reverse = True)
 		info={}
@@ -701,8 +748,9 @@ def SpecialTime(line,openhours):
 		info={}
 		info['type']='open'
 		info['hour']={}
-		info['hour']['opentime']=only_times[0][0]
-		info['hour']['closetime']=only_times[0][1]
+		(t1,t2)=Proc_Time(only_times[0][0],only_times[0][1])
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
 		try:
 			info['hour']['buytime']=buy_times[0][1]
 		except:
@@ -801,13 +849,13 @@ def SpecialTime(line,openhours):
 outlist=[u'提取',u'节',u'延长',u'其他时间',u'假日',u'休馆',u'闭',u'不开放',u'除',u'&',u'休息',u'不',u'具体时间']
 def Proc():
 	res = []
-	file=open(sys.argv[2],'rb')
-	namelist=[]
-	l=file.readline()
-	while l:
-		namelist.append(l.strip().decode('utf-8'))
-		l=file.readline()
-	file.close()
+	#file=open(sys.argv[2],'rb')
+	#namelist=[]
+	#l=file.readline()
+	#while l:
+	#	namelist.append(l.strip().decode('utf-8'))
+	#	l=file.readline()
+	#file.close()
 	file=open(sys.argv[1],'rb')
 	while True:
 		line=file.readline()
@@ -817,12 +865,12 @@ def Proc():
 			info = {}
 			info['id']=line[0]
 			info['name']=line[1].decode('utf-8')
-			if info['name'] not in namelist:
-				continue
+			#if info['name'] not in namelist:
+			#	continue
 			print ('\t'.join(line))
 			check = True
-			info['detail_time']=line[2].decode('utf-8')
-			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-')
+			#info['detail_time']=line[2].decode('utf-8')
+			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30')
 			if line[2].find(u'平日')!=-1 and line[2].find(u'周六')!=-1 and line[2].find(u'周日')!=-1:
 				line[2]=line[2].replace(u'平日',u'周一到周五')
 			if line[2].find(u'平时')!=-1 and line[2].find(u'周末')!=-1:
@@ -842,14 +890,14 @@ def Proc():
 				#print info['openingHours']
 				#print info['specialHours']
 			#print info['openingHours']
-			#print ''
 			try:
-				info['price']=Price(line[3].decode('utf-8'))
-				info['detail_price']=line[3].decode('utf-8')
+				info['price']=Price(line[3].replace('.00','').replace('.0','').decode('utf-8'))
+				#info['detail_price']=line[3].decode('utf-8')
 			except:
 				info['price']=[{'price': '0'}]
-				info['detail_price']='None'
+				#info['detail_price']='None'
 			print info
+			print ''
 		else:
 			break
 Proc()
