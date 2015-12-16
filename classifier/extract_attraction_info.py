@@ -346,11 +346,15 @@ def Time(line):
 		info['week']={}
 		try:
 			week_time=week_times[i]
-			info['week']['start']=Proc_Week(week_time[0])
-			if Proc_Week(week_time[1])!=None :
-				info['week']['end']=Proc_Week(week_time[1]) 
-			else: 
-				info['week']['end']=Proc_Week(week_time[0])
+			if Proc_Week(week_time[0])!=None:
+				info['week']['start']=Proc_Week(week_time[0])
+				if Proc_Week(week_time[1])!=None :
+					info['week']['end']=Proc_Week(week_time[1]) 
+				else: 
+					info['week']['end']=Proc_Week(week_time[0])
+			else:
+				info['week']['start']='1'
+				info['week']['end']='7'
 		except:
 			info['week']['start']='1'
 			info['week']['end']='7'
@@ -671,13 +675,14 @@ def Time(line):
 		info={}
 		info['hour']={}
 		info['hour']['opentime']=_time[0]
+		info['hour']['closetime']=u'自然闭园'
 		info['type']='open'
 		info['week']={}
 		info['week']['start']='1'
 		info['week']['end']='7'
 		info['month']={}
 		info['month']['start']='0101'
-		info['month']['start']='1231'
+		info['month']['end']='1231'
 		all.append(info)
 		return all
 	_time=rt_time.findall(line)
@@ -922,7 +927,7 @@ def SpecialTime(line,openhours):
 			all.append(info)
 		return all
 	return all
-
+changeline = re.compile(u'(旺季|淡季|夏季|秋季|春季|非冬季|Tip|冬季)')
 outlist=[u'假期',u'提取',u'节',u'延长',u'其他时间',u'假日',u'休馆',u'闭',u'不开放',u'除',u'&',u'休息',u'不',u'具体时间']
 def Proc(key,line):
 		line=line.strip()
@@ -958,7 +963,12 @@ def Proc(key,line):
 		#print info['openingHours']
 		#print ''
 		try:
-			info['price']=Price(line[4].replace('.00','').replace('.0','').decode('utf-8'))
+			if len(line)>4:
+				i=4
+				while i<len(line):
+					line[3]+=line[i]
+					i+=1
+			info['price']=Price(line[4].lower().replace('.00','').replace('.0','').decode('utf-8'))
 			if line[4].find('1. ')!=-1:
 				info['detailPrice']=line[4].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1. ',u'\n1. ').replace(u'2. ',u'\n2. ').replace(u'3. ',u'\n3. ').replace(u'4. ',u'\n4. ').replace(u'5. ',u'\n5. ').replace(u'6. ',u'\n6. ').replace(u'7. ',u'\n7. ').strip('\n')
 			else:
