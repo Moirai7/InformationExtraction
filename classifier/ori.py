@@ -46,7 +46,7 @@ today = datetime.datetime.now()
 all=[]
 all2=[]
 file=open('ll','wb')
-while today.day <=25:
+while today.day <=16:
 	week=Proc_Week(today.weekday())
 	for result in r:
 		for m in result["price"]:
@@ -93,14 +93,15 @@ while today.day <=25:
 		info2={}
 		info['id']=result['id']					
 		info2['id']=result['id']					
-		info2['detail_time']=result['detail_time']			
-		info2['detail_price']=result['detail_price']
+		info2['detail_time']=result['detailTime']			
+		info2['detail_price']=result['detailPrice']
 		info['price']=price
 		info['opentime']=opentime
 		info['closetime']=closetime
 		all.append(info)
 		all2.append(info2)
-	jsonarray = json.dumps(convert_utf8(all), ensure_ascii=False)
-	file.write(str(today)+'\t'+jsonarray+'\n')
+		file.write(str(today)+'\t'+result['id']+result['name']+result['detailTime']+opentime+closetime+result['detailPrice']+price
+	#jsonarray = json.dumps(convert_utf8(all), ensure_ascii=False)
+	#file.write(str(today)+'\t'+jsonarray+'\n')
 	print json.dumps(convert_utf8(all2), ensure_ascii=False)
 	today= today+datetime.timedelta(days = 1)

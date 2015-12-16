@@ -31,7 +31,7 @@ rt_close_time= re.compile(u'关门时间[^0-9]*('+time+u')')
 rt_time = re.compile(u'开放时间.('+time+u')')
 
 
-price=u'(?:门票.?|平时.?|成人(?:HK)?|.{5}成人.{12}|通票)?(?:(\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
+price=u'(?:门票.?|平时.?|成人|.{5}成人.{12}|通票)?(?:(hk\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
 pt_free=re.compile(u'(?:.{0,6}免费|免门票)')
 pt_only_price=re.compile(price)
 pt_price=re.compile(price+u'[^0-9]*')
@@ -930,9 +930,9 @@ def Proc(key,line):
 		info = {}
 		check = True
 		if line[3].find('1.')!=-1:
-			info['detail_time']=line[3].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1.',u'\n1.').replace(u'2.',u'\n2.').strip('\n')
+			info['detailTime']=line[3].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1. ',u'\n1. ').replace(u'2.',u'\n2.').strip('\n').replace(u'3.',u'\n3.').replace(u'4.',u'\n4.').replace(u'5.',u'\n5.')
 		else:
-			info['detail_time']=line[3].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季')
+			info['detailTime']=line[3].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季').replace(u'3.',u'\n3.').replace(u'2.',u'\n2.')
 		line[3]=line[3].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30').replace(u'景:00',u'景点')
 		if line[3].find(u'平日')!=-1 and line[3].find(u'周六')!=-1 and line[3].find(u'周日')!=-1:
 			line[3]=line[3].replace(u'平日',u'周一到周五')
@@ -959,10 +959,10 @@ def Proc(key,line):
 		#print ''
 		try:
 			info['price']=Price(line[4].replace('.00','').replace('.0','').decode('utf-8'))
-			if line[4].find('1.')!=-1:
-				info['detail_price']=line[4].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1.',u'\n1.').replace(u'2.',u'\n2.').strip('\n')
+			if line[4].find('1. ')!=-1:
+				info['detailPrice']=line[4].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1. ',u'\n1. ').replace(u'2. ',u'\n2. ').replace(u'3. ',u'\n3. ').replace(u'4. ',u'\n4. ').replace(u'5. ',u'\n5. ').replace(u'6. ',u'\n6. ').replace(u'7. ',u'\n7. ').strip('\n')
 			else:
-				info['detail_time']=line[4].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季')
+				info['detailPrice']=line[4].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季')
 		except:
 			pass#info['price']=[{'price': '0'}]
 		return json.dumps(convert_utf8(info), ensure_ascii=False)
