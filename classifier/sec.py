@@ -14,24 +14,25 @@ rt_only_time = re.compile(u'('+time+u')[^0-9pm]{1,4}('+time+u')')
 rt_week_time = re.compile(u'(?:周|星期)(.)(?:\s--\s|.|\s-\s)(?:周|星期)?(.)')
 rt_month_time= re.compile(u'(?:('+month+u')[^0-9]*('+month+u')|('+month+'))')
 rt_buy_time= re.compile(u'(?:('+time+u')(?:停止售票|止售|止售时间|停止发售|停售门船票))|(?:(?:[^0-9停止售]*(?:停止售票|止售时间|停止发售)[^0-9]*)('+time+u'))|(?:闭馆前([0-9]+)分钟停止售票)')
-rt_enter_time=re.compile(u'(?:[^0-9停止]*(?:停止入场|停止检票|閉山|截止上岛|入场截止|停止入馆|入馆)[^0-9]*)('+time+')|(?:('+time+u')(?:停止入馆))')
+rt_enter_time=re.compile(u'(?:[^0-9停止]*(?:停止入场|停止检票|閉山|截止上岛|入场截止|停止入馆|入馆|截止入场时间)[^0-9]*)('+time+')|(?:('+time+u')(?:停止入馆|停止入场))')
 rt_info_time=re.compile(u'(春、夏、秋|夏秋|冬春|冬季|冬|旺季|淡季|夏季|秋季|春季|非冬季|冬季|春.?夏|秋.?冬|单场|两场)')
 number=re.compile(u'[0-9]+')
 
 rt_speci_time = re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9周]*('+time+u')[^0-9]{1,4}('+time+u')(?:(?:[^0-9停止|止售]*(?:停止售票|停止发售|止售时间)[^0-9]*)('+time+u'))?(?:(?:[^0-9停止]*[停止入场|停止检票][^0-9]*)('+time+')?)?')
 rt_speci_time2 = re.compile(u'(?:[0-9]+~)?[0-9]+\s?月')
-rt_speci_time3=re.compile(u'景:00(.*)')
-rt_speci_time5=re.compile(u'([^无]夜场(.*))|(索道(.*))|(夜游开放时间(.*))')
+rt_speci_time3=re.compile(u'景点(.*)')
+rt_speci_time5=re.compile(u'([^无]夜场(.*))|景区内场馆开放时间(.*)|(索道(.*))|(夜游开放时间(.*))')
 rt_speci_time4=re.compile(u'[^0-9开]*开闭?园时间[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')[^0-9]*售票[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')')
 rt_speci_time6 = re.compile(u'(?:[0-9]+、){1,5}[0-9]+月')
 rt_speci_time7 = re.compile(u'[0-9]+[^0-9平日]*(?:平日)[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')[^0-9停止]*停止售票[^0-9]*('+time+u')')
+rt_speci_time8 = re.compile(u'(?:夏季|冬季)[^夏冬季]*')
 rt_open_time = re.compile(u'开门时间[^0-9]*('+time+u')')
 rt_close_time= re.compile(u'关门时间[^0-9]*('+time+u')')
 rt_time = re.compile(u'开放时间.('+time+u')')
 
 
 price=u'(?:门票.?|平时.?|成人(?:HK)?|.{5}成人.{12}|通票)?(?:(\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
-pt_free=re.compile(u'(?:.{0,4}免费|免门票)')
+pt_free=re.compile(u'(?:.{0,6}免费|免门票)')
 pt_only_price=re.compile(price)
 pt_price=re.compile(price+u'[^0-9]*')
 pt_speci_price=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9]*('+price+u')')
@@ -104,9 +105,9 @@ def convert_utf8(obj):
     return obj
 def Price(line):
 	all=[]
-	if pt_free.match(line):
+	if line.find(u'免费')!=-1 or pt_free.match(line):
 		info={}
-		info['price']='0'
+		info['price']=u'免费'
 		all.append(info)
 		return all
 	only_price = pt_only_price.match(line)
@@ -133,6 +134,10 @@ def Price(line):
 			info['price']=p
 			info['month']={}
 			try:
+				info['month']['info']=info_time[i]
+			except:
+				pass
+			try:
 				month_time=month_times[i]
 				if month_time[0]==u'' and month_time[2]!=u'':
 					tt = number.findall(month_time[2])
@@ -145,12 +150,12 @@ def Price(line):
 					tt1=['1','1']
 					tt2=['12','31']
 			except:
-				tt1=['1','1']
-				tt2=['12','31']
-			try:
-				info['month']['info']=info_time[i]
-			except:
-				pass
+				if 'info' in info['month']:
+					tt1=['1','1']
+					tt2=['12','31']
+				else:
+					tt1=['0','0']
+					tt2=['0','0']
 			info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
 			info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 			all.append(info)
@@ -193,7 +198,10 @@ def Price(line):
 	info={}
 	prices=[]
 	for o in only_price:
-		prices.append(float(o[1].strip(u'元')))
+		try:
+			prices.append(float(o[1].strip(u'元')))
+		except:
+			prices.append(o[0])
 	prices.sort()
 	info['price']=str(prices[0]).replace('.0','')+u'元起'
 	all.append(info)
@@ -248,6 +256,8 @@ def Time(line):
 	if speci_time7:
 		info={}
 		info['month']={}
+		info['month']['start']='0101'
+		info['month']['end']='1231'
 		info['week']={}
 		info['week']['start']='1'
 		info['week']['end']='7'
@@ -353,6 +363,10 @@ def Time(line):
 		#info['week']=s
 		info['month']={}
 		try:
+			info['month']['info']=info_time[i]
+		except:
+			pass
+		try:
 			month_time=month_times[i]
 			if month_time[0]==u'' and month_time[2]!=u'':
 				tt = number.findall(month_time[2])
@@ -365,12 +379,12 @@ def Time(line):
 				tt1=['1','1']
 				tt2=['12','31']
 		except:
-			tt1=['1','1']
-			tt2=['12','31']
-		try:
-			info['month']['info']=info_time[i]
-		except:
-			pass
+			if 'info' in info['month']:
+				tt1=['0','0']
+				tt2=['0','0']
+			else:
+				tt1=['1','1']
+				tt2=['12','31']
 		info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
 		info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 		all.append(info)
@@ -403,7 +417,10 @@ def Time(line):
 		try:
 			week_time=week_times[i]
 			info['week']['start']=Proc_Week(week_time[0])
-			info['week']['end']=Proc_Week(week_time[1])
+			if Proc_Week(week_time[1])!=None :
+				info['week']['end']=Proc_Week(week_time[1])
+			else:
+				info['week']['end']=Proc_Week(week_time[0])
 		except:
 			info['week']['start']='1'
 			info['week']['end']='7'
@@ -415,6 +432,10 @@ def Time(line):
 		#	a+=1
 		#info['week']=s
 		info['month']={}
+		try:
+			info['month']['info']=info_time[i/2]
+		except:
+			pass
 		try:
 			month_time=month_times[i/2]
 			if month_time[0]==u'' and month_time[2]!=u'':
@@ -428,12 +449,12 @@ def Time(line):
 				tt1=['1','1']
 				tt2=['12','31']
 		except:
-			tt1=['1','1']
-			tt2=['12','31']
-		try:
-			info['month']['info']=info_time[i/2]
-		except:
-			pass
+			if 'info' in info['month']:
+				tt1=['0','0']
+				tt2=['0','0']
+			else:
+				tt1=['1','1']
+				tt2=['12','31']
 		info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
 		info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 		all.append(info)
@@ -479,9 +500,9 @@ def Time(line):
 			for i in xrange(len(close_time)):
 				info={}	
 				info['hour']={}
-				(t1,t2)=Proc_Time(open_time[0],close_time[i])
-				info['hour']['opentime']=t1
-				info['hour']['closetime']=t2
+				#(t1,t2)=Proc_Time(open_time[0],close_time[i])
+				info['hour']['opentime']=open_time[0]
+				info['hour']['closetime']=close_time[i]
 				try:
 					buy_time=buy_times2[i]
 					if buy_time[0]==u'':
@@ -703,6 +724,37 @@ def Time(line):
 		info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 		all.append(info)
 	   return all
+	#植物园
+	speci_time8 = rt_speci_time8.findall(line)
+	if speci_time8 and line.find(u'天目湖')==-1:
+		for x in speci_time8:
+			only_times=rt_only_time.findall(x)
+			info_time=rt_info_time.findall(x)
+			enter=[]
+			out=[]
+			for x in only_times: 
+				(t1,t2)=Proc_Time(x[0],x[1])
+				enter.append(t1)
+				out.append(t2)
+			enter.sort()
+			out.sort(reverse = True)
+			info={}
+			info['hour']={}
+			info['hour']['opentime']=enter[0]
+			info['hour']['closetime']=out[0]
+			info['type']='open'
+			info['week']={}
+			info['week']['start']='1'
+			info['week']['end']='7'
+			info['month']={}
+			try:
+				info['month']['info']=info_time[0]
+			except:
+				pass
+			info['month']['start']='0000'
+			info['month']['end']='0000'
+			all.append(info)
+		return all
 	elif line!='' and len(only_times)!=0:
 		enter=[]
 		out=[]
@@ -727,24 +779,46 @@ def Time(line):
 	return all
 
 rt_openearly_time=re.compile(u'提前([0-9]*)分钟开门')
-rt_holiday_time=re.compile(u'(?:春节|五一|国庆节|暑假|佛诞节日|特殊佛教节日|每周一|周一闭馆|节假日|周一\\().*')
+rt_holiday_time=re.compile(u'(?:春节|五一|国庆节|暑假|佛诞节日|公众假期|特殊佛教节日|每周一|周一闭馆|tips|节假日|周一\\().*')
 rt_except_time=re.compile(u'(?:\\(([^0-9除外]*)除外\\))|(?:(法定节假日)周一照常开放)|(?:(国家法定节假日)(?:除外|周一开馆))')
-rt_close_time=re.compile(u'周(.)闭馆')
+rt_closedoor_time=re.compile(u'周(.)(?:pm)?(?:闭馆|上午例行检修)')
 rt_extensive_time=re.compile(u'闭馆时间延长(.)小时，闭馆前(.)小时停止售票')
-holiday=[u'五一',u'十一',u'春节',u'国庆节',u'暑假',u'佛诞节日',u'朔望',u'农历初一',u'十五',u'二月十九',u'四月初八',u'六月十九',u'九月十九',u'节假日',u'周一',u'除夕',u'初一',u'初二',u'国家法定节假日']
+holiday=[u'五一',u'公众假期',u'十一',u'春节',u'国庆节',u'暑期',u'暑假',u'佛诞节日',u'朔望',u'农历初一',u'十五',u'二月十九',u'四月初八',u'六月十九',u'九月十九',u'节假日',u'周一',u'除夕',u'初一',u'初二',u'国家法定节假日']
 
 def SpecialTime(line,openhours):
 	all=[]
 	only_time=rt_only_time.match(line)
-	if only_time and line.find(u'闭馆')==-1:
+	if only_time and line.find(u'闭馆')==-1 and line.find(u'提前30分钟')==-1 and line.find(u'每周一上午')==-1:
 		return all
 	l=rt_holiday_time.findall(line)
 	try:
 		only_times=rt_only_time.findall(l[0])
 	except:
 		only_times=None
+	#故宫
+	close_time=rt_closedoor_time.findall(line)
+	if only_times and  line.find(u'pm闭馆')!=-1:
+		buy_times=rt_buy_time.findall(l[0])
+		info={}
+		info['type']='open'
+		info['holiday']=[]
+		for h in holiday:
+			if l[0].find(h)!=-1 and h.find(u'周')==-1:
+				info['holiday'].append(h)
+		all.append(info)
+		info={}
+		info['type']='open'
+		info['holiday']=[]
+		info['holiday'].append(u'周'+close_time[0][0])	
+		all.append(info)
+		info['hour']={}
+		(t1,t2)=Proc_Time(only_times[0][0],only_times[0][1])
+		info['hour']['opentime']=t1
+		info['hour']['closetime']=t2
+		return all
 	if only_times:
 		buy_times=rt_buy_time.findall(l[0])
+		enter_times=rt_enter_time.findall(l[0])
 		info={}
 		info['type']='open'
 		info['hour']={}
@@ -753,6 +827,10 @@ def SpecialTime(line,openhours):
 		info['hour']['closetime']=t2
 		try:
 			info['hour']['buytime']=buy_times[0][1]
+		except:
+			pass
+		try:
+			info['hour']['entertime']=enter_times[0][0]
 		except:
 			pass
 		info['holiday']=[]
@@ -812,7 +890,6 @@ def SpecialTime(line,openhours):
 			return all
 	except:
 		pass
-	close_time=rt_close_time.findall(line)
 	if close_time:
 		info={}
 		info['type']='close'
@@ -845,8 +922,8 @@ def SpecialTime(line,openhours):
 			all.append(info)
 		return all
 	return all
-
-outlist=[u'提取',u'节',u'延长',u'其他时间',u'假日',u'休馆',u'闭',u'不开放',u'除',u'&',u'休息',u'不',u'具体时间']
+changeline = re.compile(u'(旺季|淡季|夏季|秋季|春季|非冬季|Tip|冬季)')
+outlist=[u'假期',u'提取',u'节',u'延长',u'其他时间',u'假日',u'休馆',u'闭',u'不开放',u'除',u'&',u'休息',u'不',u'具体时间']
 def Proc():
 	res = []
 	#file=open(sys.argv[2],'rb')
@@ -867,20 +944,26 @@ def Proc():
 			info['name']=line[1].decode('utf-8')
 			#if info['name'] not in namelist:
 			#	continue
+			#if (info['name'] ==u'西湖' and info['id']!='http://lvyou.baidu.com/xihu') or (info['name'] ==u'香山' and info['id']!='http://lvyou.baidu.com/xiangshan') or (info['name'] ==u'武侯祠' and info['id']!='http://lvyou.baidu.com/wuhouci'):
+			#	continue
 			print ('\t'.join(line))
 			check = True
-			#info['detail_time']=line[2].decode('utf-8')
-			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30')
+			if line[2].find('1. ')!=-1:
+				info['detail_time']=line[2].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1. ',u'\n1. ').replace(u'2.',u'\n2.').strip('\n')
+			else:
+				#info['detail_time']=changeline.sub('\n\1',line[2].lower().decode('utf-8'))
+				info['detail_time']=line[2].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季')
+			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30').replace(u'景:00',u'景点')
 			if line[2].find(u'平日')!=-1 and line[2].find(u'周六')!=-1 and line[2].find(u'周日')!=-1:
 				line[2]=line[2].replace(u'平日',u'周一到周五')
 			if line[2].find(u'平时')!=-1 and line[2].find(u'周末')!=-1:
 				line[2]=line[2].replace(u'平时',u'周一到周六')
 			for o in outlist:
-				if line[2].find(o) != -1:
+				if line[2].find(o) != -1 and line[2].find(u"闭馆前20分钟停止售票")==-1:
 					check = False
 					break
 			l=rt_speci_time5.sub(u'',line[2])
-			l=l.replace(u'节假日:06:00~20:00',u'').replace(u'墓室:09:00~18:00','')
+			l=l.replace(u'节假日:06:00~20:00',u'').replace(u'墓室:09:00~18:00','').replace(u'收费景点8:30-17:00','')
 			info['openingHours']=Time(l)
 			if check is False:
 				st =SpecialTime(line[2],info['openingHours'])
@@ -892,11 +975,15 @@ def Proc():
 			#print info['openingHours']
 			try:
 				info['price']=Price(line[3].replace('.00','').replace('.0','').decode('utf-8'))
-				#info['detail_price']=line[3].decode('utf-8')
+				if line[3].find('1. ')!=-1:
+					info['detail_price']=line[3].lower().decode('utf-8').replace(u'tip',u'\nTip').replace(u'1. ',u'\n1. ').replace(u'2. ',u'\n2. ').replace(u'3. ',u'\n3. ').replace(u'4. ',u'\n4. ').replace(u'5.',u'\n5.').replace(u'6.',u'\n6.').replace(u'7.',u'\n7.').strip('\n')
+				else:
+					info['detail_price']=line[3].lower().decode('utf-8').replace(u'旺季',u'\n旺季').replace(u'淡季',u'\n淡季').replace(u'tip',u'\nTip').replace(u'夏季',u'\n夏季').replace(u'冬季',u'\n冬季').strip('\n').replace(u'非\n冬季',u'非冬季')
 			except:
-				info['price']=[{'price': '0'}]
+				pass
+				#info['price']=[{'price': '0'}]
 				#info['detail_price']='None'
-			print info
+			print json.dumps(convert_utf8(info), ensure_ascii=False)
 			print ''
 		else:
 			break

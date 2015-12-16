@@ -19,6 +19,18 @@ def Proc_Week(tt):
                 return u'周六'
         if tt==6:
                 return u'周日'
+def convert_utf8(obj):
+    if isinstance(obj, unicode):
+        return obj.encode('utf-8')
+    if isinstance(obj, list):
+        return [convert_utf8(val) for val in obj]
+    if isinstance(obj, dict):
+        newDict = {}
+        for key in obj.keys():
+            newDict[key.encode('utf-8')] = convert_utf8(obj[key])
+        return newDict
+    return obj
+
 r=[]
 ls=[]
 file=open(sys.argv[1],'rb')
@@ -32,6 +44,8 @@ while line:
 	line=file.readline()
 today = datetime.datetime.now() 
 all=[]
+all2=[]
+file=open('ll','wb')
 while today.day <=25:
 	week=Proc_Week(today.weekday())
 	for result in r:
@@ -76,12 +90,17 @@ while today.day <=25:
 						opentime = 'close'
 						closetime = 'close'
 		info = {}
+		info2={}
 		info['id']=result['id']					
-		info['detail_time']=result['detail_time']			
-		info['detail_price']=result['detail_price']
+		info2['id']=result['id']					
+		info2['detail_time']=result['detail_time']			
+		info2['detail_price']=result['detail_price']
 		info['price']=price
 		info['opentime']=opentime
 		info['closetime']=closetime
 		all.append(info)
-	print all
+		all2.append(info2)
+	jsonarray = json.dumps(convert_utf8(all), ensure_ascii=False)
+	file.write(str(today)+'\t'+jsonarray+'\n')
+	print json.dumps(convert_utf8(all2), ensure_ascii=False)
 	today= today+datetime.timedelta(days = 1)
