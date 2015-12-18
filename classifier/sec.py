@@ -20,6 +20,7 @@ number=re.compile(u'[0-9]+')
 
 rt_speci_time = re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9周]*('+time+u')[^0-9]{1,4}('+time+u')(?:(?:[^0-9停止|止售]*(?:停止售票|停止发售|止售时间)[^0-9]*)('+time+u'))?(?:(?:[^0-9停止]*[停止入场|停止检票][^0-9]*)('+time+')?)?')
 rt_speci_time2 = re.compile(u'(?:[0-9]+~)?[0-9]+\s?月')
+rt_speci_time22 = re.compile(u'(?:[0-9]+~)[0-9]+\s?月')
 rt_speci_time3=re.compile(u'景点(.*)')
 rt_speci_time5=re.compile(u'([^无]夜场(.*))|景区内场馆开放时间(.*)|(索道(.*))|(夜游开放时间(.*))')
 rt_speci_time4=re.compile(u'[^0-9开]*开闭?园时间[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')[^0-9]*售票[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')')
@@ -31,7 +32,7 @@ rt_close_time= re.compile(u'关门时间[^0-9]*('+time+u')')
 rt_time = re.compile(u'开放时间.('+time+u')')
 
 
-price=u'(?:门票.?|平时.?|成人|.{5}成人.{12}|通票)?(?:(hk\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
+price=u'(?:门票.?|平时.?|成人|.{5}成人.{12}|通票)?(?:(hk\s?\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
 pt_free=re.compile(u'(?:.{0,6}免费|免门票)')
 pt_only_price=re.compile(price)
 pt_price=re.compile(price+u'[^0-9]*')
@@ -125,8 +126,26 @@ def Price(line):
 		info['price']=only_price[0][1]
 		all.append(info)
 		return all
+	#特殊
+	speci_time=rt_speci_time22.findall(line)
 	month_times=rt_month_time.findall(line)
 	info_time=rt_info_time.findall(line)
+	if speci_time and len(only_price)==2 and len(speci_time)==4 :
+		for i in xrange(len(speci_time)):
+			p = only_price[i/2][1]
+			info={}
+			info['price']=p
+			info['month']={}
+			try:
+				info['month']['info']=info_time[i]
+			except:
+				pass
+			month_time=speci_time[i]
+			tt = number.findall(month_time)
+			info['month']['start']=Proc_Month([tt[0]]) if tt else '0101'
+			info['month']['end']=Proc_Month([tt[1]]) if tt else '1231'
+			all.append(info)
+		return all
 	if len(only_price)==len(month_times) and len(only_price)==2:
 		for i in xrange(len(only_price)):
 			p = only_price[i][1]
@@ -393,8 +412,10 @@ def Time(line):
 		info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 		all.append(info)
 	   return all
+	if (len(only_times)==len(month_times)):
+		print 'eee'
 	#月 周 时间 周 时间
-	if (len(only_times)==len(week_times) and len(only_times)==4 and len(month_times)==2) or (len(only_times)==3 and len(week_times)==2 and len(month_times)==2) or (len(only_times)==len(week_times) and len(only_times)==4 and len(info_time)==2):
+	if (len(only_times)==len(week_times) and len(only_times)==4 and len(month_times)==2) or (len(only_times)==3 and len(week_times)==2 and len(month_times)==2) or (len(only_times)==len(week_times) and len(only_times)==4 and len(info_time)==2) :
 	   for i in xrange(len(only_times)):
 		only_time = only_times[i]
 		info={}
@@ -598,7 +619,7 @@ def Time(line):
 		info['hour']['closetime']='24:00'
 		all.append(info)
 		return all
-	#特殊
+	#特殊 圆明园
 	speci_time=rt_speci_time2.findall(line)
 	if speci_time and len(only_times)==3 and len(speci_time)==5 and len(buy_times)==3:
 	   for i in xrange(len(only_times)):
@@ -984,18 +1005,20 @@ def Proc():
 					while i<len(line):
 						line[3]+=line[i]
 						i+=1
-				info['price']=Price(line[3].lower().replace('.00','').replace('.0','').decode('utf-8'))
 				if line[3].find('1. ')!=-1:
 					info['detailPrice']=line[3].lower().decode('utf-8').replace(u'tip',u'\$Tip').replace(u'1. ',u'\$1. ').replace(u'2. ',u'\$2. ').replace(u'3. ',u'\$3. ').replace(u'4. ',u'\$4. ').replace(u'5. ',u'\$5. ').replace(u'6. ',u'\$6. ').replace(u'7. ',u'\$7. ').strip('\$')
 				else:
 					info['detailPrice']=line[3].lower().decode('utf-8').replace(u'旺季',u'\$旺季').replace(u'淡季',u'\$淡季').replace(u'tip',u'\$Tip').replace(u'夏季',u'\$夏季').replace(u'冬季',u'\$冬季').strip('\$').replace(u'非\$冬季',u'非冬季')
+				info['price']=Price(line[3].lower().replace('.00','').replace('.0','').decode('utf-8'))
 			except:
+				import traceback
+				traceback.print_exc()
 				pass
 				#info['price']=[{'price': '0'}]
 				#info['detail_price']='None'
-			#print json.dumps(convert_utf8(info), ensure_ascii=False)
-			print info
-			#print ''
+			print json.dumps(convert_utf8(info), ensure_ascii=False)
+			#print info
+			print ''
 		else:
 			break
 Proc()

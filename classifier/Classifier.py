@@ -17,6 +17,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import Pipeline,FeatureUnion
 from sklearn.decomposition import PCA,TruncatedSVD
+import Levenshtein
 import numpy
 import math
 import collections
@@ -27,15 +28,8 @@ import json
 import traceback
 #should not use the class right now,i need to change the method _process_data to let the test data can get answer accurately
 class Classifier:
-	#genre:dict n_tuple n_dict line
-	#vec:hashingvec featurehash dictvec
-	#type:gaussiannb lr
-	def __init__(self,test=True,genre='line',vec='hashingvec',type='lr',identify='muqin'):
-		self.genre = genre
-		self.vec = vec
-		self.type = type
+	def setIden(self,identify):
 		self.identify=identify
-		self.test = test
 		if identify == 'muqin':
 			self.newwords2=[u"\u5988\u5988",u"\u6bcd\u4eb2"]#muqin
 		elif identify == 'fuqin':
@@ -53,9 +47,52 @@ class Classifier:
 		elif identify == 'qizi':
 			self.newwords2=[u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]#qizi
 		print self.newwords2[0].encode('utf-8')
-		import re
-		self.de = re.compile(u"[\u4e00-\u9fa5]")
-		self.relation = {u'fuqin':('PERSON','PERSON'),u'erzi':('PERSON','PERSON'),u'nver':('PERSON','PERSON'),u'nvyou':('PERSON','PERSON'),u'nanyou':('PERSON','PERSON'),u'muqin':('PERSON','PERSON'),u'emma':('PERSON','PERSON'),u'zhangfu':('PERSON','PERSON'),u'qizi':('PERSON','PERSON'),u'\u5973\u53cb':('PERSON','PERSON'),u'\u5973\u513f':('PERSON','PERSON'),u'\u59bb\u5b50':('PERSON','PERSON'),u'\u4e08\u592b':('PERSON','PERSON'),u'\u524d\u592b':('PERSON','PERSON'),u'\u7236\u4eb2':('PERSON','PERSON'),u'\u8eab\u9ad8':('PERSON','HEIGHT'),u'\u751f\u65e5':('PERSON','DATE'),u'\u64ad\u51fa\u65f6\u95f4':('FILM','TIME'),u'\u4e3b\u9898\u66f2':('FILM','MUSIC')}
+		import cPickle as pickle
+		from sklearn.externals import joblib
+		#TODO
+		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_norm.txt'
+		#strs = 'classifier/train_data/muqin_VotingClassifier_norm.txt'
+		print strs
+		self.normalizer=pickle.load(open(strs, 'rb'))
+		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_logic_dep.train'
+		print strs
+		self.clf = joblib.load(strs)
+		print self.clf
+		from InterClassifier import InterClassifier
+		self.ic = InterClassifier(self.genre,self.newwords2,self.stop)
+		
+	#genre:dict n_tuple n_dict line
+	#vec:hashingvec featurehash dictvec
+	#type:gaussiannb lr
+	def __init__(self,test=True,genre='line',vec='hashingvec',type='lr',identify='muqin'):
+		file = open('stopwords.txt','rb')
+		line = file.readline()
+		self.stop=[]
+		while line:
+			self.stop.append(line.strip('\r\n').strip('\n'))
+			line = file.readline()
+		self.genre = genre
+		self.vec = vec
+		self.type = type
+		self.test = test
+		self.identify=identify
+		if identify == 'muqin':
+			self.newwords2=[u"\u5988\u5988",u"\u6bcd\u4eb2"]#muqin
+		elif identify == 'fuqin':
+			self.newwords2=[u"\u7238\u7238",u"\u7236\u4eb2"]#fuqin
+		elif identify == 'erzi':
+			self.newwords2=[u"\u513f\u5b50"]#erzi
+		elif identify == 'nver':
+			self.newwords2=[u"\u5973\u513f"]#nver
+		elif identify == 'nvyou':
+			self.newwords2=[u"\u5973\u670b\u53cb",u"\u5973\u53cb"]#nvyou
+		elif identify == 'nanyou':
+			self.newwords2=[u"\u7537\u670b\u53cb",u"\u7537\u53cb"]#nanyou
+		elif identify == 'zhangfu':
+			self.newwords2=[u"\u8001\u516c",u"\u4e08\u592b",u"\u592b\u5987"]#zhangfu
+		elif identify == 'qizi':
+			self.newwords2=[u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]#qizi
+		print self.newwords2[0].encode('utf-8')
 		if test:
 			import cPickle as pickle
 			from sklearn.externals import joblib
@@ -68,14 +105,11 @@ class Classifier:
 			print strs
 			self.clf = joblib.load(strs)
 			print self.clf
-		file = open('stopwords.txt','rb')
-		line = file.readline()
-		self.stop=[]
-		while line:
-			self.stop.append(line.strip('\r\n').strip('\n'))
-			line = file.readline()
 		from InterClassifier import InterClassifier
 		self.ic = InterClassifier(genre,self.newwords2,self.stop)
+		import re
+		self.de = re.compile(u"[\u4e00-\u9fa5]")
+		self.relation = {u'fuqin':('PERSON','PERSON'),u'erzi':('PERSON','PERSON'),u'nver':('PERSON','PERSON'),u'nvyou':('PERSON','PERSON'),u'nanyou':('PERSON','PERSON'),u'muqin':('PERSON','PERSON'),u'emma':('PERSON','PERSON'),u'zhangfu':('PERSON','PERSON'),u'qizi':('PERSON','PERSON'),u'\u5973\u53cb':('PERSON','PERSON'),u'\u5973\u513f':('PERSON','PERSON'),u'\u59bb\u5b50':('PERSON','PERSON'),u'\u4e08\u592b':('PERSON','PERSON'),u'\u524d\u592b':('PERSON','PERSON'),u'\u7236\u4eb2':('PERSON','PERSON'),u'\u8eab\u9ad8':('PERSON','HEIGHT'),u'\u751f\u65e5':('PERSON','DATE'),u'\u64ad\u51fa\u65f6\u95f4':('FILM','TIME'),u'\u4e3b\u9898\u66f2':('FILM','MUSIC')}
 		self.speci = ["、",",","，","&"]
 		self.speci2 = ["-",":","》","并","从","图","、",",","(",")","【","】","-","|","‖","☆ ","与","/","及","；","为","也","被","，","&","·","_","的","等","]","”","吗","#","《","吧","在","是","?","？","很","：","说","都","饰","和","而","里","（","[","“","）","."]
 		self.biaodian = [u"\u3001",",",u"\uff0c",".",u"\u3002","|",u"\uff1b","_",u"\uff1a",":",u"\u201d",u"\u201c"]
@@ -369,6 +403,18 @@ class Classifier:
 		#print 'Classifier start'
 		return self.classifier_get_score(s,p,words,_seg,self.clf)
 
+	def _semi_Levenshtein(self,lines):
+		strs=[]
+		lines = lines.split('\t')
+		for id in xrange(len(lines)):
+			l = lines[id]
+			for s in strs:
+				ratio = Levenshtein.ratio(s,l)
+				if ratio<0.6:
+					return True
+			strs.append(l)
+		return False
+
 	#count the answer of a relation
 	def statistics(self,newwords,tags,segs,ners,deps):
 		s=newwords[0]
@@ -491,18 +537,27 @@ class Classifier:
 		except:
 			print 'classifier 492 error'
 			return []
-		top=2
+		top=3
 		for v in dict:
-			if top>0 or v[1]>30.0:
+			strs = s+'\t'+p+'\t'+v[0]+'\t'+str(v[1])
+			times=0
+			lll=''
+			for line in fromline:
+				if line.find(v[0]) != -1:
+					times+=1
+					lll += '\t'+line
+			#check = self._semi_Levenshtein(lll)
+			strs+=lll
+			#if check is False:
+			#	print 'semi: ' +strs 
+			#	continue
+			if top>0 or (v[1]/times>0.16 and times>5):
 				if v[1] != max :
 					top-=1
 					max = top
-				strs = s+'\t'+p+'\t'+v[0]+'\t'+str(v[1])
-				for line in fromline:
-					if line.find(v[0]) != -1:
-						strs += '\t'+line
 				list.append(strs)
 		return list
+
 
 if __name__ == '__main__':
 	c = Classifier(test=False,genre='n_tuple')

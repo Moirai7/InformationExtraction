@@ -154,6 +154,7 @@ class InterClassifier:
 						continue
 			else:
 				return
+			#print line_seg.encode('utf-8')
 			seg = line_seg.split('\t')
 			pos = line_pos.split('\t')
 			ner = line_ner.split('\t')
@@ -306,7 +307,7 @@ class InterClassifier:
 					#	lan = (seg[id]+"_pos"+pos[id]).encode('utf-8')
 				#if self.genre=='n_tuple' or self.genre=='line':
 				#	ddd.append(lan)
-			#print (' \t '.join(seg)+'\n'+'\t'.join(dep)+'\n'+' \t '.join(pos)+'\n'+' \t '.join(ner)+'\n'+json.dumps(ddd)).encode('utf-8')
+			print (' \t '.join(seg)+'\n'+'\t'.join(dep)+'\n'+' \t '.join(pos)+'\n'+' \t '.join(ner)+'\n'+json.dumps(ddd)).encode('utf-8')
 			s.append(nw)
 			p.append(tag)
 			_seg.append(seg)

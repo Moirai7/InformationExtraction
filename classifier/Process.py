@@ -10,7 +10,9 @@ import json
 import re
 #from dep import TextSim
 class Process:
-	def __init__(self):
+	def setIden(self,iden):
+		self.c.setIden(iden)
+	def __init__(self,test=False):
 		#self.t = TextSim()
 		self.rels = {}
 		self.rels["erzi"] = [u"\u513f\u5b50"]    
@@ -24,6 +26,9 @@ class Process:
 		self.q = re.compile(r'\\')
 		self.p = re.compile('<[^>]+>') 
 		self.b = re.compile('(http|ftp|https)?(:\/\/)?([\w\-_]+\.)+([\w\-:_]+/)([\w\-\.,@^=%&amp;:/~\+#]+)?')
+		self.test = test
+		if test is True:
+			self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify='muqin')
 		pass
 
 	def _semi(self,lines):
@@ -125,8 +130,68 @@ class Process:
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
 
+	def _proc_upload(self,file):
+		lists = []
+		with open(file,'rb') as fd:
+			for line in fd:
+				line = line.strip('\r\n').strip('\n').split('\t')
+				line[0] = line[0].strip() 
+				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
+				for x in self.rels[line[1]]:
+					strs += x.encode('utf-8')+' '
+				strs=strs.strip()+'"], 500, 40, 10]}\'`'
+				print strs
+				(llll,lines_info) = self._process_json(strs,line)
+				if llll is None:
+					print 'indri None '+strs
+					continue
+				list = self.c.test_test_indri(llll,lines_info)
+				if len(list)==0:
+					print 'indri + test None '+strs
+					continue
+				ans=line[0]+'\t'+line[1]
+				count=0
+				for l in list:
+					if count >=4:
+						break
+					tline = l.encode('utf-8').split('\t')
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
+					for x in self.rels[line[1]]:
+						strs += x.encode('utf-8')+' '
+					strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+					(llll,lines_info) = self._process_json(strs,tline)
+					if llll is None:
+						print 'high score result( small orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						l = l.split('\t')
+						if float(l[3])>30.0 :
+							ans+='\t'+l[2].encode('utf8')+'\t'+l[3].encode('utf8')
+							count+=1
+						continue
+					(score,lens) = self.c.test_verify_indri(llll,lines_info)
+					if score<0.58 or lens<10 :
+						print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						continue
+					else:
+						print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+						l = l.split('\t')
+						if float(l[3])>30.0 :
+							ans+='\t'+l[2].encode('utf8')+'\t'+l[3].encode('utf8')
+							count+=1
+				lists.append(ans)
+		return lists
+
+	def _choice(l,score):
+		l= line.split('\t')
+		if strs == l[0].split(' : ')[1] and score>30.0:
+			print l[2]+' '+l[3],
+		if score>100.0 :
+			if strs!=l[0].split(' : ')[1]:
+				strs = l[0].split(' : ')[1]
+				print '\n'+strs+'\t'+l[1]+'\t'+l[2]+' '+l[3],
+
 	def _proc_call_shell(self,iden):
-		self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify=iden)
+		if self.test is False:
+			self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='AdaBoostClassifier',vec='featurehash',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(vec='dictvec',genre='n_dict',identify=iden)
 		#self.c = Classifier.Classifier(type='svc',vec='featurehash',genre='n_dict',identify=iden)
@@ -197,7 +262,7 @@ class Process:
 								asa=1
 							continue
 						(score,lens) = self.c.test_verify_indri(llll,lines_info)
-						if score<0.5 or lens<5 :
+						if score<0.58 or lens<10 :
 							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
 							continue
 						else:
@@ -378,7 +443,7 @@ if __name__ == '__main__':
 		#p._fanhua_extract(identify)
 		#p._train_data(identify,res='emma')
 		#p._train_data(identify)
-		#p._train_data('muqin')
+		p._train_data('muqin')
 		p._train_data('fuqin')
 		p._train_data('qizi')
 		p._train_data('zhangfu')
