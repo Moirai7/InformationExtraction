@@ -130,55 +130,51 @@ class Process:
 		#self.c = Classifier.Classifier(type='svc',test=False,vec='featurehash',genre='n_dict',identify=iden)
 		self.c.test_train_indri(res,res_info)
 
-	def _proc_upload(self,file):
-		lists = []
-		with open(file,'rb') as fd:
-			for line in fd:
-				line = line.strip('\r\n').strip('\n').split('\t')
-				line[0] = line[0].strip() 
-				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
-				for x in self.rels[line[1]]:
-					strs += x.encode('utf-8')+' '
-				strs=strs.strip()+'"], 500, 40, 10]}\'`'
-				print strs
-				(llll,lines_info) = self._process_json(strs,line)
-				if llll is None:
-					print 'indri None '+strs
-					continue
-				list = self.c.test_test_indri(llll,lines_info)
-				if len(list)==0:
-					print 'indri + test None '+strs
-					continue
-				ans=line[0]+'\t'+line[1]
-				count=0
-				for l in list:
-					if count >=4:
-						break
-					tline = l.encode('utf-8').split('\t')
-					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
-					for x in self.rels[line[1]]:
-						strs += x.encode('utf-8')+' '
-					strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
-					(llll,lines_info) = self._process_json(strs,tline)
-					if llll is None:
-						print 'high score result( small orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
-						l = l.split('\t')
-						if float(l[3])>30.0 :
-							ans+='\t'+l[2].encode('utf8')+'\t'+l[3].encode('utf8')
-							count+=1
-						continue
-					(score,lens) = self.c.test_verify_indri(llll,lines_info)
-					if score<0.58 or lens<10 :
-						print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
-						continue
-					else:
-						print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
-						l = l.split('\t')
-						if float(l[3])>30.0 :
-							ans+='\t'+l[2].encode('utf8')+'\t'+l[3].encode('utf8')
-							count+=1
-				lists.append(ans)
-		return lists
+	def _proc_upload(self,win,line):
+		line = line.strip('\r\n').strip('\n').split('\t')
+		line[0] = line[0].strip() 
+		strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
+		for x in self.rels[line[1]]:
+			strs += x.encode('utf-8')+' '
+		strs=strs.strip()+'"], 500, 40, 10]}\'`'
+		print strs
+		(llll,lines_info) = self._process_json(strs,line)
+		if llll is None:
+			print 'indri None '+strs
+			return 
+		list = self.c.test_test_indri(llll,lines_info)
+		if len(list)==0:
+			print 'indri + test None '+strs
+			return
+		ans=line[0]+'\t'+line[1]+'\t'
+		count=0
+		for l in list:
+			if count >=4:
+				break
+			tline = l.encode('utf-8').split('\t')
+                        #win 可修改 0.3 可修改
+			if float(tline[3])/(int(tline[4]))<=0.3 or float(tline[3])<win :
+				print 'high score result(delete orilen '+tline[4]+' ) : '+l.encode('utf-8')
+				continue
+			strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
+			for x in self.rels[line[1]]:
+				strs += x.encode('utf-8')+' '
+			strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+			(llll,lines_info) = self._process_json(strs,tline)
+			if llll is None:
+				print 'high score result( small orilen '+tline[4]+' ) : '+l.encode('utf-8')
+				ans+=tline[2]+' '+tline[3]+' '
+				count+=1
+				continue
+			(score,lens) = self.c.test_verify_indri(llll,lines_info)
+			if score<0.58 or lens<10 :
+				print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
+				continue
+			else:
+				print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
+				ans+=tline[2]+' '+tline[3]+' '
+				count+=1
+		return ans.strip()+'\n'
 
 	def _choice(l,score):
 		l= line.split('\t')
@@ -256,17 +252,17 @@ class Process:
 						#strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
 						(llll,lines_info) = self._process_json(strs,tline)
 						if llll is None:
-							print 'high score result( small orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							print 'high score result( small orilen '+tline[4]+' ) : '+l.encode('utf-8')
 							if tline[2] == line[2]:
 								current+=1
 								asa=1
 							continue
 						(score,lens) = self.c.test_verify_indri(llll,lines_info)
 						if score<0.58 or lens<10 :
-							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
 							continue
 						else:
-							print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
+							print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
 						if tline[2] == line[2]:
 							current+=1
 							asa=1
@@ -367,7 +363,7 @@ class Process:
 		try:
 			js = json.loads(strs[3].replace('\r\n', '').replace('\n',''), strict=False)
 		except:
-			print 'error'
+			#print 'error'
 			#traceback.print_exc()
 			#print strs[3].replace('\r\n', '').replace('\n','').decode('utf-8', 'ignore').encode('utf-8', 'ignore')
 			#js = json.loads( unicode(strs[3],'ISO-8859-1'), strict=False )

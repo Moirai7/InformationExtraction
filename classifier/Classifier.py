@@ -276,7 +276,7 @@ class Classifier:
 		m_ner=[]
 		m_dep=[]
 		for i in xrange(len(p)):
-			print 'test info : '+s[i].encode('utf-8')+' '+an+' '+pred[i]+' '+htmls[i]+' '+''.join(_seg[i]).encode('utf-8')
+			#print 'test info : '+s[i].encode('utf-8')+' '+an+' '+pred[i]+' '+htmls[i]+' '+''.join(_seg[i]).encode('utf-8')
 			#print dec[i]
 			#if p[i] == pred[i] and dec[i]>25.0:
 			#if p[i] == pred[i] and dec[i][1]>0.5:
@@ -472,7 +472,7 @@ class Classifier:
 							else:
 								maybe=''
 							try:
-								distance = 0.1/(math.fabs(id-index_p)+math.fabs(id-index_s))
+								distance = round(0.1/(math.fabs(id-index_p)+math.fabs(id-index_s)),2)
 								if id-index_p==1 and id-index_s==2:
 									distance+=2
 								elif id-index_p==1 and ner[id-2] != (self.relation[tag.decode('utf-8')])[1]:
@@ -500,20 +500,20 @@ class Classifier:
 							#if maybe!='':
 								#print 'add '+newwords[i].encode('utf-8')+','+tag.encode('utf-8')+','+maybe.encode('utf-8')+','+str(distance+0.15)
 							if seg[id] in answer:
-								dict[seg[id]]+=distance+0.15
+								dict[seg[id]]+=distance+0.15001
 							else:
-								dict[seg[id]]=distance+0.15
+								dict[seg[id]]=distance+0.15001
 							if maybe!='':
 								if maybe in answer:
-									dict[maybe]+=distance+0.15
+									dict[maybe]+=distance+0.15001
 								else:
-									dict[maybe]=distance+0.15
+									dict[maybe]=distance+0.15001
 							lianxu += 1
-							dict_dis[seg[id]]=distance+0.15
+							dict_dis[seg[id]]=distance+0.15001
 							_a.append(seg[id])
 							answer.append(seg[id])
 							if maybe!='':
-								dict_dis[maybe]=distance+0.15
+								dict_dis[maybe]=distance+0.15001
 								_a.append(maybe)
 								answer.append(maybe)
 					else:
@@ -539,23 +539,24 @@ class Classifier:
 			return []
 		top=3
 		for v in dict:
-			strs = s+'\t'+p+'\t'+v[0]+'\t'+str(v[1])
-			times=0
-			lll=''
-			for line in fromline:
-				if line.find(v[0]) != -1:
-					times+=1
-					lll += '\t'+line
-			#check = self._semi_Levenshtein(lll)
-			strs+=lll
-			#if check is False:
-			#	print 'semi: ' +strs 
-			#	continue
-			if top>0 or (v[1]/times>0.16 and times>5):
+			times=(v[1]*100-int(v[1]*100))*1000
+			try:
+			    if (top>0 and int(times)>1) or (v[1]/times>0.16 and int(times)>5):
 				if v[1] != max :
 					top-=1
 					max = top
-				list.append(strs)
+				strs = s+'\t'+p+'\t'+v[0]+'\t'+str(v[1])+'\t'+str(int(times))
+			    else:
+				continue
+			except:
+				pass
+			lll=''
+			for line in fromline:
+				if line.find(v[0]) != -1:
+					#times+=1
+					lll += '\t'+line
+			strs+=lll
+			list.append(strs)
 		return list
 
 

@@ -15,14 +15,14 @@ rt_week_time = re.compile(u'(?:周|星期)(.)(?:\s--\s|.|\s-\s)(?:周|星期)?(.
 rt_month_time= re.compile(u'(?:('+month+u')[^0-9]*('+month+u')|('+month+'))')
 rt_buy_time= re.compile(u'(?:('+time+u')(?:停止售票|止售|止售时间|停止发售|停售门船票))|(?:(?:[^0-9停止售]*(?:停止售票|止售时间|停止发售)[^0-9]*)('+time+u'))|(?:闭馆前([0-9]+)分钟停止售票)')
 rt_enter_time=re.compile(u'(?:[^0-9停止]*(?:停止入场|停止检票|閉山|截止上岛|入场截止|停止入馆|入馆|截止入场时间)[^0-9]*)('+time+')|(?:('+time+u')(?:停止入馆|停止入场))')
-rt_info_time=re.compile(u'(春、夏、秋|夏秋|冬春|冬季|冬|旺季|淡季|夏季|秋季|春季|非冬季|冬季|春.?夏|秋.?冬|单场|两场)')
+rt_info_time=re.compile(u'(春、夏、秋|夏秋|冬春|冬季|冬|旺季|淡季|夏季|秋季|春季|春夏秋|冬季|春.?夏|秋.?冬|单场|两场)')
 number=re.compile(u'[0-9]+')
 
-rt_speci_time = re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9周]*('+time+u')[^0-9]{1,4}('+time+u')(?:(?:[^0-9停止|止售]*(?:停止售票|停止发售|止售时间)[^0-9]*)('+time+u'))?(?:(?:[^0-9停止]*[停止入场|停止检票][^0-9]*)('+time+')?)?')
+rt_speci_time = re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|春夏秋|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9周]*('+time+u')[^0-9]{1,4}('+time+u')(?:(?:[^0-9停止|止售]*(?:停止售票|停止发售|止售时间)[^0-9]*)('+time+u'))?(?:(?:[^0-9停止]*[停止入场|停止检票][^0-9]*)('+time+')?)?')
 rt_speci_time2 = re.compile(u'(?:[0-9]+~)?[0-9]+\s?月')
 rt_speci_time22 = re.compile(u'(?:[0-9]+~)[0-9]+\s?月')
 rt_speci_time3=re.compile(u'景点(.*)')
-rt_speci_time5=re.compile(u'([^无]夜场(.*))|景区内场馆开放时间(.*)|(索道(.*))|(夜游开放时间(.*))')
+rt_speci_time5=re.compile(u'((?:春节|五一|国庆节|暑假|佛诞节日|公众假期|特殊佛教节日|每周一|周一闭馆|周一\\().*)|([^无]夜场(.*))|景区内场馆开放时间(.*)|(索道(.*))|(夜游开放时间(.*))|(tip(.*))|(每周二闭馆)')
 rt_speci_time4=re.compile(u'[^0-9开]*开闭?园时间[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')[^0-9]*售票[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')')
 rt_speci_time6 = re.compile(u'(?:[0-9]+、){1,5}[0-9]+月')
 rt_speci_time7 = re.compile(u'[0-9]+[^0-9平日]*(?:平日)[^0-9]*('+time+u')[^0-9]{1,4}('+time+u')[^0-9停止]*停止售票[^0-9]*('+time+u')')
@@ -32,13 +32,13 @@ rt_close_time= re.compile(u'关门时间[^0-9]*('+time+u')')
 rt_time = re.compile(u'开放时间.('+time+u')')
 
 
-price=u'(?:门票.?|平时.?|成人|.{5}成人.{12}|通票)?(?:(hk\s?\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
+price=u'(?:门票[^0-9]?|平时.?|成人|.{5}成人.{12}|通票)?(?:(hk\s?\$[0-9]+)|([0-9]+(?:.[0-9]+)?\s?元))'
 pt_free=re.compile(u'(?:.{0,6}免费|免门票)')
 pt_only_price=re.compile(price)
 pt_price=re.compile(price+u'[^0-9]*')
-pt_speci_price=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9]*('+price+u')')
-pt_speci_price3=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)?[^0-9]*((?:[0-9]+~)?[0-9]+\s?月)[^0-9]*('+price+u')')
-pt_speci_price2=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|非冬季|冬季)[^0-9]*('+price+u')')
+pt_speci_price=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|春夏秋|冬季)?[^0-9]*('+month+u')[^0-9]*('+month+u')[^0-9]*('+price+u')')
+pt_speci_price3=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|春夏秋|冬季)?[^0-9]*((?:[0-9]+~)?[0-9]+\s?月)[^0-9]*('+price+u')')
+pt_speci_price2=re.compile(u'[0-9]?[^0-9旺淡季]*(旺季|淡季|夏季|秋季|春季|春夏秋|冬季)[^0-9]*('+price+u')')
 def Proc_Month(tt):
 	t=tt[0]
 	if int(t)<10:
@@ -170,11 +170,11 @@ def Price(line):
 					tt2=['12','31']
 			except:
 				if 'info' in info['month']:
-					tt1=['1','1']
-					tt2=['12','31']
-				else:
 					tt1=['0','0']
 					tt2=['0','0']
+				else:
+					tt1=['1','1']
+					tt2=['12','31']
 			info['month']['start']=Proc_Month(tt1) if tt1 else '0101'
 			info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 			all.append(info)
@@ -412,8 +412,6 @@ def Time(line):
 		info['month']['end']=Proc_Month(tt2) if tt2 else '1231'
 		all.append(info)
 	   return all
-	if (len(only_times)==len(month_times)):
-		print 'eee'
 	#月 周 时间 周 时间
 	if (len(only_times)==len(week_times) and len(only_times)==4 and len(month_times)==2) or (len(only_times)==3 and len(week_times)==2 and len(month_times)==2) or (len(only_times)==len(week_times) and len(only_times)==4 and len(info_time)==2) :
 	   for i in xrange(len(only_times)):
@@ -919,7 +917,7 @@ def SpecialTime(line,openhours):
 	if close_time:
 		info={}
 		info['type']='close'
-		info['holiday']=u'周'+close_time[0][0]
+		info['holiday']=[u'周'+close_time[0][0]]
 		all.append(info)
 	try:
 		extensive_time=rt_extensive_time.findall(l[0])
@@ -948,7 +946,7 @@ def SpecialTime(line,openhours):
 			all.append(info)
 		return all
 	return all
-changeline = re.compile(u'(旺季|淡季|夏季|秋季|春季|非冬季|Tip|冬季)')
+changeline = re.compile(u'(旺季|淡季|夏季|秋季|春季|春夏秋|Tip|冬季)')
 outlist=[u'假期',u'提取',u'节',u'延长',u'其他时间',u'假日',u'休馆',u'闭',u'不开放',u'除',u'&',u'休息',u'不',u'具体时间']
 def Proc():
 	res = []
@@ -979,11 +977,11 @@ def Proc():
 			else:
 				#info['detail_time']=changeline.sub('\$\1',line[2].lower().decode('utf-8'))
 				info['detailHours']=line[2].lower().decode('utf-8').replace(u'旺季',u'\$旺季').replace(u'淡季',u'\$淡季').replace(u'tip',u'\$Tip').replace(u'夏季',u'\$夏季').replace(u'冬季',u'\$冬季').strip('\$').replace(u'非\$冬季',u'非冬季').replace(u'3.',u'\$3.').replace(u'2.',u'\$2.')
-			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30').replace(u'景:00',u'景点')
+			line[2]=line[2].lower().decode('utf-8').replace(u'\uff1a',u':').replace(u'国定假日',u'国家法定节假日').replace(u'国定节假日',u'国家法定节假日').replace(u'每周七天开放','').replace(u'下午',u'pm').replace(u'点',u':00').replace(u'am to ',u'').replace(u'正午',u'12:00 ').replace(u'无休息日',u'').replace(u'全天开放',u'00:00-24:00').replace(u' - ',u'-').replace(u'日落',u'17:30').replace(u'景:00',u'景点').replace(u'夏季略有延长',u'').replace(u"非冬季",u"春夏秋")
 			if line[2].find(u'平日')!=-1 and line[2].find(u'周六')!=-1 and line[2].find(u'周日')!=-1:
 				line[2]=line[2].replace(u'平日',u'周一到周五')
-			if line[2].find(u'平时')!=-1 and line[2].find(u'周末')!=-1:
-				line[2]=line[2].replace(u'平时',u'周一到周六')
+			if (line[2].find(u'平时')!=-1 or line[2].find(u'平日')!=-1) and line[2].find(u'周末')!=-1:
+				line[2]=line[2].replace(u'平时',u'周一到周六').replace(u'平日',u'周一到周六')
 			for o in outlist:
 				if line[2].find(o) != -1 and line[2].find(u"闭馆前20分钟停止售票")==-1:
 					check = False
