@@ -176,15 +176,6 @@ class Process:
 				count+=1
 		return ans.strip()+'\n'
 
-	def _choice(l,score):
-		l= line.split('\t')
-		if strs == l[0].split(' : ')[1] and score>30.0:
-			print l[2]+' '+l[3],
-		if score>100.0 :
-			if strs!=l[0].split(' : ')[1]:
-				strs = l[0].split(' : ')[1]
-				print '\n'+strs+'\t'+l[1]+'\t'+l[2]+' '+l[3],
-
 	def _proc_call_shell(self,iden):
 		if self.test is False:
 			self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify=iden)
@@ -214,73 +205,35 @@ class Process:
 				if len(list)==0:
 					print 'indri + test None '+strs
 					continue
-				#if line[2] != 'emma':
-				if False:
-					asa = 0
-					if len(list) != 0:
-						all+=1
-					for l in list:
-						print 'result'+l.encode('utf-8')
-						if l.split('\t')[2]==line[2].decode('utf-8'):
-							asa=1
-					if asa==1:
-						current+=1
-						print 'current : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					else:
-						print 'wrong(241) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					print 'all :'+str(all)
-					print 'current :'+str(current)
-				else:
-					asa=0
-					if len(list) != 0:
-						all+=1
-					else:
+				ans=line[0]+'\t'+line[1]+'\t'
+				count=0
+				for l in list:
+					if count >=4:
+						break
+					tline = l.encode('utf-8').split('\t')
+					#5 可修改 0.3 可修改
+					if float(tline[3])/(int(tline[4]))<=0.3 or float(tline[3])<5 :
+						print 'high score result(delete orilen '+tline[4]+' ) : '+l.encode('utf-8')
 						continue
-					print 'high score current : '+line[0]+'\t'+line[1]+'\t'+line[2]
-					asa=0
-					for l in list:
-						tline = l.encode('utf-8').split('\t')
-						#print tline[0]+' '+tline[2]
-						#if (float(tline[3])<1.0 and len(tline)<9):
-						#	print 'high score result(delete orilen '+str(len(tline)-4)+' ) : '+l.encode('utf-8')
-						#	continue	
-						strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
-						for x in self.rels[line[1]]:
-							strs += x.encode('utf-8')+' '
-						strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
-						print strs
-						#strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'+tline[2]+'"], 500, 40, 10]}\'`'
-						(llll,lines_info) = self._process_json(strs,tline)
-						if llll is None:
-							print 'high score result( small orilen '+tline[4]+' ) : '+l.encode('utf-8')
-							if tline[2] == line[2]:
-								current+=1
-								asa=1
-							continue
-						(score,lens) = self.c.test_verify_indri(llll,lines_info)
-						if score<0.58 or lens<10 :
-							print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
-							continue
-						else:
-							print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
-						if tline[2] == line[2]:
-							current+=1
-							asa=1
-					if asa==0:
-						print 'still wrong!'
-					print 'all :'+str(all)
-					print 'current :'+str(current)
-			except IndexError:
-				print 'waiting...'
-				print 'wrong(269) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-				traceback.print_exc()
-				continue
-			except Exception,e:
-				print 'wrong(273) : '+line[0]+'\t'+line[1]+'\t'+line[2]
-				traceback.print_exc()  
-				continue
-		print 'all :'+str(all)
-		print 'current :'+str(current)
+					strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+tline[0]+'","'
+					for x in self.rels[line[1]]:
+						strs += x.encode('utf-8')+' '
+					strs=strs.strip()+'","'+tline[2]+'"], 500, 40, 10]}\'`'
+					(llll,lines_info) = self._process_json(strs,tline)
+					if llll is None:
+						print 'high score result( small orilen '+tline[4]+' ) : '+l.encode('utf-8')
+						ans+=tline[2]+' '+tline[3]+' '
+						count+=1
+						continue
+					(score,lens) = self.c.test_verify_indri(llll,lines_info)
+					if score<0.58 or lens<10 :
+						print 'high score result(delete score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
+						continue
+					else:
+						print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
+						ans+=tline[2]+' '+tline[3]+' '
+						count+=1
+		return
 
 	def _fanhua_extract(self,iden):
 		res =[]
