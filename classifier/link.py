@@ -1,5 +1,5 @@
-
-f1 = open('alloo','rb')
+import sys
+f1 = open(sys.argv[1],'rb')
 strs=[]
 
 line=f1.readline()
@@ -11,7 +11,7 @@ while line:
 	line=f1.readline()
 
 
-f2 = open('newoomuqin','rb')
+f2 = open(sys.argv[2],'rb')
 strs2=[]
 
 line=f2.readline()

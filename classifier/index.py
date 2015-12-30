@@ -38,6 +38,46 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     #def __init__(self):
     #	self.p=Process(True)
 
+    def handle_one_request(self):
+        """Handle a single HTTP request.
+ 
+        You normally don't need to override this method; see the class
+        __doc__ string for information on how to handle specific HTTP
+        commands such as GET and POST.
+ 
+        """
+        try:
+            self.raw_requestline = self.rfile.readline(65537)
+            if len(self.raw_requestline) > 65536:
+                self.requestline = ''
+                self.request_version = ''
+                self.command = ''
+                self.send_error(414)
+                return
+            if not self.raw_requestline:
+                self.close_connection = 1
+                return
+            if not self.parse_request():
+                # An error code has been sent, just exit
+                return
+            mname = 'do_' + self.command
+            if not hasattr(self, mname):
+                self.send_error(501, "Unsupported method (%r)" % self.command)
+                return
+            method = getattr(self, mname)
+            print "before call do_Get"
+            method()
+            #增加 debug info 及 wfile 判断是否已经 close
+            print "after call do_Get"
+            if not self.wfile.closed:
+                self.wfile.flush() #actually send the response if not already done.
+            print "after wfile.flush()"
+        except socket.timeout, e:
+            #a read or a write timed out.  Discard this connection
+            self.log_error("Request timed out: %r", e)
+            self.close_connection = 1
+            return
+
     def do_GET(self):
         """Serve a GET request."""
         f = self.send_head()
@@ -53,6 +93,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_POST(self):
 	iden=None
+	win =None
 	if '?' in self.path:
 		query = urllib.splitquery(self.path)
 		action = query[0]
@@ -63,27 +104,43 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				queryParams[kv[0]] = urllib.unquote(kv[1]).decode("utf-8", 'ignore')
 				if kv[0]=='identify':
 					iden = queryParams[kv[0]]
-					break
+				elif kv[0]=='weight':
+					win = float(queryParams[kv[0]])
 	if iden is None:
 		print 'Param?' 
 		return
+	if win is None:
+                dic_win = {"muqin":12,"fuqin":12,"qizi":12,"zhangfu":12,"nver":12,"erzi":12,"nvyou":12,"nanyou":12}
+		win = dic_win[iden]
         """Serve a POST request."""
         r, info = self.deal_post_data()
         print r, info, "by: ", self.client_address
 	proc.setIden(iden)
-	lists = proc._proc_upload(self.filename)
-        f = StringIO()
-	for l in lists:
-		f.write(l+'\n')
-        length = f.tell()
-        f.seek(0)
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.send_header("Content-Length", str(length))
-        self.end_headers()
-        if f:
-            self.copyfile(f, self.wfile)
-            f.close()
+	lists =[]
+	with open(self.filename,'rb') as fd:
+		for line in fd:
+			if self.wfile.closed:
+				break
+			strs = proc._proc_upload(win,line)
+			if strs is not None:
+				try:
+					self.wfile.write(strs)
+				except:
+					print 'stoped'
+					break
+			#lists.append(strs)
+        #f = StringIO()
+	#for l in lists:
+	#	f.write(l)
+        #length = f.tell()
+        #f.seek(0)
+        #self.send_response(200)
+        #self.send_header("Content-type", "text/html")
+        #self.send_header("Content-Length", str(length))
+        #self.end_headers()
+        #if f:
+        #    self.copyfile(f, self.wfile)
+        #    f.close()
         
     def deal_post_data(self):
         boundary = self.headers.plisttext.split("=")[1]
@@ -98,7 +155,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if not fn:
             return (False, "Can't find out file name...")
         path = self.translate_path(self.path)
-        fn = os.path.join(path, fn[0])
+        fn = os.path.join(path+'/upload', fn[0])
         while os.path.exists(fn):
             fn += "_"
         line = self.rfile.readline()

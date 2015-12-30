@@ -20,11 +20,12 @@ def get_result(sourcePath, destPath):
                 print result[0]
                 continue
             else:
-                if i%2 == 0 and i < length-2:
+                if i%2 == 0 :#and i < length-2:
                     score = get_score(result[0], result[1], result[i])
                     ret +=  result[i] + " " + str(score).strip(" \t\s\n") + " " 
         ret = ret.strip(" \t\s\n")
-        dest.write("%s\t%s\t%s\n" %(result[0], result[1], ret)) 
+	if len(result)>1:
+        	dest.write("%s\t%s\t%s\n" %(result[0], result[1], ret)) 
 
 def get_score(s, p, o):
     data = "S=" + s + "&P=" + p + "&O=" + o

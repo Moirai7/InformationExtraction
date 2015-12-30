@@ -188,15 +188,10 @@ class Process:
 			line = line.strip('\r\n').strip('\n').split('\t')
 			try:
 				line[0] = line[0].strip() 
-				#line[1] ='nvyou'
-				#line.append('emma')
-				#if line[1]!='muqin':
-				#	break
 				strs = 'echo `curl -XPOST nmg01-kgb-odin3.nmg01:8051/1 -d \'{"method":"search","params" : [["'+line[0]+'","'
 				for x in self.rels[line[1]]:
 					strs += x.encode('utf-8')+' '
 				strs=strs.strip()+'"], 500, 40, 10]}\'`'
-				print strs
 				(llll,lines_info) = self._process_json(strs,line)
 				if llll is None:
 					print 'indri None '+strs
@@ -233,7 +228,9 @@ class Process:
 						print 'high score result( score '+str(score)+' length '+str(lens)+' orilen '+tline[4]+' ) : '+l.encode('utf-8')
 						ans+=tline[2]+' '+tline[3]+' '
 						count+=1
-		return
+			except Exception,e:
+				traceback.print_exc() 
+				continue
 
 	def _fanhua_extract(self,iden):
 		res =[]
@@ -376,6 +373,8 @@ if __name__ == '__main__':
 	if len(sys.argv)==3:
 		test = sys.argv[1]
 		identify = sys.argv[2]
+	elif len(sys.argv)==2:
+		test = sys.argv[1]
 	else:
 		test = 'test'
 		identify = 'muqin'
