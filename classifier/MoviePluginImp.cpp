@@ -717,15 +717,13 @@ int64_t MoviePluginImp::DoQuery(
             ::faci::graphsearch::Json scene_json;
             std::string response_str = *response;
             scene_json.fromString(response_str);
-            CNOTICE_LOG("compute start %s",response_str.c_str());
-            try {   
-                if (!scene_json.isNull()) {
-                    compute_scene_pc(scene_json["resultData"]["tplData"]["result"][(size_t)0],gremlinConnect);
+            if (!scene_json.isNull() && scene_json.isMember("resultData") && scene_json["resultData"].isMember("tplData") && scene_json["resultData"]["tplData"].isMember("result")) {
+                for (size_t i=0;i<scene_json["resultData"]["tplData"]["result"].size();++i) {
+                    compute_scene_pc(scene_json["resultData"]["tplData"]["result"][i],gremlinConnect);
                     scene_json.toString(response_str);
-                    CNOTICE_LOG("compute end %s",response_str.c_str());
                     *response = response_str;
-                }
-            } catch ( const std::exception &e ) {
+		}
+            } else {
                 CNOTICE_LOG("none_answer");
             }
         }
@@ -740,9 +738,8 @@ bool MoviePluginImp::check_weeks(struct tm *ptm,std::string week1,std::string we
     std::stringstream ss;
     ss<<ptm->tm_wday;
     std::string week = ss.str();
-    CNOTICE_LOG("today %s ; week1 %s ; week2 %s",week.c_str(),week1.c_str(),week2.c_str());
+    CDEBUG_LOG("today %s ; week1 %s ; week2 %s",week.c_str(),week1.c_str(),week2.c_str());
     if (week>=week1 and week<=week2) {
-    CNOTICE_LOG("week in true");
         return true;
     }else {
         return false;
@@ -752,15 +749,17 @@ bool MoviePluginImp::check_weeks(struct tm *ptm,std::string week1,std::string we
 bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
     char today [9];
     strftime(today, sizeof(today), "%G%m%d",ptm);
-    CNOTICE_LOG("infos : %s", infos.c_str());
     std::string info="";
-    if ( infos.find("春") !=std::string::npos ) {
+    if (infos.find("春") != std::string::npos) {
         info += "\"春季\",";
-    }else if ( infos.find("夏") !=std::string::npos ) {
+    }
+    if (infos.find("夏") != std::string::npos) {
         info += "\"夏季\",";
-    }else if ( infos.find("秋") !=std::string::npos ) {
+    }
+    if (infos.find("秋") != std::string::npos) {
         info += "\"秋季\",";
-    }else if ( infos.find("冬") !=std::string::npos ) {
+    }
+    if (infos.find("冬") != std::string::npos) {
         info += "\"冬季\",";
     }
     if (info.empty()) {
@@ -773,17 +772,15 @@ bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos,faci::knowledg
     ::sofa::ObjectPtr extra_info;
     std::string spo_query = "search_season(date_from_string(\""+std::string(today)+"\"), ["+info+"])";
     int req = gremlinConnect->computeQuery(spo_query, __ret, extra_info, "person");
-    CNOTICE_LOG("sa_spo : %d", req);
-    CNOTICE_LOG("spo_query : %s", spo_query.c_str());
+    CDEBUG_LOG("sa_spo : %d", req);
+    CDEBUG_LOG("spo_query : %s", spo_query.c_str());
     std::string result = ::sofa::unbox<std::string>(__ret);
     faci::graphsearch::Json element;
     element.fromString(result);
-    CNOTICE_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
+    CDEBUG_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
     if (element.isMember("data") && element["data"].asString()=="true") {
-        CNOTICE_LOG("infos in");
         return true;
     } else {
-        CNOTICE_LOG("infos none");
         return false;
     }
 }
@@ -816,10 +813,9 @@ bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string da
         ss<<ptm->tm_year+1900<<date1;
         date1 = ss.str();
     }
-    CNOTICE_LOG("today %s ; date1 %s ; date2 %s",today.c_str(),date1.c_str(),date2.c_str());
+    CDEBUG_LOG("today %s ; date1 %s ; date2 %s",today.c_str(),date1.c_str(),date2.c_str());
     //参数 today + date1 + date2
     if (today>=date1 && today<=date2) {
-        CNOTICE_LOG("date in true");
         return true;
     }
     //日期之内
@@ -852,17 +848,15 @@ bool MoviePluginImp::check_holiday(struct tm *ptm,std::string holiday,faci::know
     ::sofa::ObjectPtr extra_info;
     std::string spo_query = "search_holiday(date_from_string(\""+std::string(today)+"\"), ["+holiday+"])";
     int req = gremlinConnect->computeQuery(spo_query, __ret, extra_info, "person");
-    CNOTICE_LOG("sa_spo : %d", req);
-    CNOTICE_LOG("spo_query : %s \t %s",holiday.c_str(), spo_query.c_str());
+    CDEBUG_LOG("sa_spo : %d", req);
+    CDEBUG_LOG("spo_query : %s \t %s",holiday.c_str(), spo_query.c_str());
     std::string result = ::sofa::unbox<std::string>(__ret);
     faci::graphsearch::Json element;
     element.fromString(result);
-    CNOTICE_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
+    CDEBUG_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
     if (element.isMember("data") && element["data"].asString()=="true") {
-        CNOTICE_LOG("holiday in");
         return true;
     } else {
-        CNOTICE_LOG("holiday none");
         return false;
     }
 }
@@ -871,8 +865,7 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
     ::faci::graphsearch::Json result = structured_json["openingHours"];
     std::string opentime="";
     std::string closetime="";
-    CNOTICE_LOG("compute_today_openinghours ");
-    if ( !result.isArray() )
+    if (!result.isArray())
     {
         CDEBUG_LOG("result is not array");
         return NULL;
@@ -880,15 +873,14 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
     std::time_t nowtime;
     nowtime = time(NULL); //获取日历时间 
     struct tm *ptm=localtime(&nowtime);
-    for( size_t i=0; i<result.size(); i++ )
+    for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
         bool check_month = false;
         bool check_week = false;
         bool has_month = false;
         bool has_week = false;
-        if ( tmp.isMember("month") ) {
-            CNOTICE_LOG(" has month ");
+        if (tmp.isMember("month")) {
             has_month = true;
             if (tmp["month"].isMember("start") && tmp["month"]["start"].asString()!="0000") {
                 if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString(),gremlinConnect)) {
@@ -896,21 +888,18 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
                 }else {
                     check_month = false;
                 }
-            }else if ( tmp["month"].isMember("info") ) {
+            }else if (tmp["month"].isMember("info")) {
                 if (check_infos(ptm,tmp["month"]["info"].asString(),gremlinConnect)) {
                     check_month = true;
                 }
             }
         }
         if (has_month&&check_month){
-            CNOTICE_LOG(" checked month ");
             if (tmp.isMember("week")) {
-            CNOTICE_LOG(" has week ");
                 has_week = true;
                 if (tmp["week"].isMember("start")) {
                     if (check_weeks(ptm,tmp["week"]["start"].asString(),tmp["week"]["end"].asString())) {
                         check_week=true;
-                        CNOTICE_LOG(" checked week ");
                     }else {
                         check_week=false;
                     }
@@ -923,35 +912,31 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
                 opentime = tmp["hour"]["opentime"].asString();
             }
             closetime = tmp["hour"]["closetime"].asString();
-            CNOTICE_LOG(" checked date ");
             break;
         }
     }
 
     if (!structured_json.isMember("specialHours")) {
         if (opentime!="" && closetime!=""){
-           CNOTICE_LOG("time is returned");
            return opentime + "~" + closetime;
         } else {
-           CNOTICE_LOG("time is None");
            return "";
         }
     }
     result = structured_json["specialHours"];
-    CNOTICE_LOG("compute_today_openinghours");
-    if ( !result.isArray() )
+    if (!result.isArray())
     {
         CDEBUG_LOG("result is not array");
         return "";
     }
     bool week_close = false;
-    for( size_t i=0; i<result.size(); i++ )
+    for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
         if (tmp.isMember("holiday")) {
             std::string info="";
             if (tmp["type"].asString()=="close") {
-                for( size_t j=0; j<tmp["holiday"].size(); j++ ) {
+                for (size_t j=0; j<tmp["holiday"].size(); j++) {
                     if (tmp["holiday"][j].asString().find("周")==std::string::npos){
                         info += "\""+tmp["holiday"][j].asString()+"\",";
                     }else {
@@ -960,23 +945,20 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
                         std::stringstream ss;
                         ss<<"周"<<pxq[ptm->tm_wday];
                         std::string week = ss.str();
-                        CNOTICE_LOG("week %s" , week.c_str());
                         if (tmp["holiday"][j].asString().find(week)!=std::string::npos) {
                             week_close = true;
-                            CNOTICE_LOG("week %s closed" , week);
                         }
                     }
                 }
                 if (!info.empty()) {
                     info.erase(info.end()-1);
-                    CNOTICE_LOG("holiday close %s",info.c_str());
                     if (check_holiday(ptm,info,gremlinConnect)) {
                         return "close";
                     }
                 }
             }else {
                 bool check = false;
-                for( size_t j=0; j<tmp["holiday"].size(); j++ ) {
+                for (size_t j=0; j<tmp["holiday"].size(); j++) {
                     if (tmp["holiday"][j].asString().find("周")==std::string::npos){
                         info+="\""+tmp["holiday"][j].asString()+"\",";
                     }else {
@@ -985,27 +967,25 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
                         std::stringstream ss;
                         ss<<"周"<<pxq[ptm->tm_wday];
                         std::string week = ss.str();
-                        CNOTICE_LOG("week %s " , week.c_str());
                         if (tmp["holiday"][j].asString().find(week)!=std::string::npos) {
-                            CNOTICE_LOG("special week %s open",week);
                             check = true;
                         }
                     }
                 }
-                if (!info.empty()) {
+                if (!info.empty()&&!check) {
                     info.erase(info.end()-1);
-                    CNOTICE_LOG("holiday open %s",info.c_str());
-                    if (check || check_holiday(ptm,info,gremlinConnect)) {
-                        if (tmp.isMember("hour")) {
-                            if (tmp["hour"].isMember("opentime")) {
-                                opentime = tmp["hour"]["opentime"].asString();
-                            }
-                            if (tmp["hour"].isMember("closetime")) {
-                                closetime = tmp["hour"]["closetime"].asString();
-                            }
-                         }
-                         return opentime + "~" + closetime;
-                    }
+                    check = check_holiday(ptm,info,gremlinConnect);
+                }
+                if (check) {
+                    if (tmp.isMember("hour")) {
+                        if (tmp["hour"].isMember("opentime")) {
+                            opentime = tmp["hour"]["opentime"].asString();
+                        }
+                        if (tmp["hour"].isMember("closetime")) {
+                            closetime = tmp["hour"]["closetime"].asString();
+                        }
+                     }
+                     return opentime + "~" + closetime;
                 }
             }
         }
@@ -1021,8 +1001,7 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
 
 std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json structured_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
     ::faci::graphsearch::Json result = structured_json;
-    CNOTICE_LOG("compute_today_price");
-    if ( !result.isArray() )
+    if (!result.isArray())
     {
         CDEBUG_LOG("result is not array");
         return NULL;
@@ -1030,16 +1009,15 @@ std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json struct
     std::time_t nowtime;
     nowtime = time(NULL); //获取日历时间 
     struct tm *ptm=localtime(&nowtime);
-    for( size_t i=0; i<result.size(); i++ )
+    for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
         if (tmp.isMember("month")) {
-            CNOTICE_LOG("month");
             if (tmp["month"].isMember("start")) {
                 if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString(),gremlinConnect)) {
                     return tmp["price"].asString();
                 }
-            }else if(tmp["month"].isMember("info")) {
+            }else if (tmp["month"].isMember("info")) {
                 if (check_infos(ptm,tmp["month"]["info"].asString(),gremlinConnect)) {
                     return tmp["price"].asString();
                 } else if (tmp["month"]["info"].asString().find("淡季")!=std::string::npos) {
@@ -1047,20 +1025,15 @@ std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json struct
                 }
             }
         }else {
-            CNOTICE_LOG("month none");
             return tmp["price"].asString();
         }
     }
-    CNOTICE_LOG("None Price");
+    CDEBUG_LOG("None Price");
     return "";
 }
 
 void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
-    if (!scene_json.isMember("structured_info")){
-        CNOTICE_LOG("scene_json.isMember structured_info ");
-    }
-    if (scene_json.isMember("structured_info")) {
-        CNOTICE_LOG("structured_info");
+    if (!scene_json.isNull() && scene_json.isMember("structured_info")) {
         std::string structured_info = scene_json["structured_info"].asString();
         ::faci::graphsearch::Json structured_json;
         structured_json.fromString(structured_info);
@@ -1071,24 +1044,25 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json,faci
             if (!toh.empty()) {
                  scene_json["todayOpeningHours"] = toh;
             }
-            CNOTICE_LOG("compute_today_openinghours end : %s",toh.c_str());
+            CDEBUG_LOG("compute_today_openinghours end : %s",toh.c_str());
         }
         if (structured_json.isMember("price")) {
             std::string toh = compute_today_price(structured_json["price"],gremlinConnect);
             if (!toh.empty()) {
                  scene_json["todayPrice"] = toh;
             }
-            CNOTICE_LOG("compute_today_price end : %s",toh.c_str());
+            CDEBUG_LOG("compute_today_price end : %s",toh.c_str());
         }
         // 提取带换行的详细时间与票价
         if (structured_json.isMember("detailTime")) {
             scene_json["detailOpeningHours"] = structured_json["detailTime"].asString();
-            CNOTICE_LOG("detailOpeningHours end : %s",structured_json["detailTime"].asString().c_str());
+            CDEBUG_LOG("detailOpeningHours end : %s",structured_json["detailTime"].asString().c_str());
         }
         if (structured_json.isMember("detailPrice")) {
             scene_json["detailPrice"] = structured_json["detailPrice"].asString();
-            CNOTICE_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
+            CDEBUG_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
         }
+	scene_json.removeMember("structured_info");
     }
 }
 
