@@ -722,7 +722,7 @@ int64_t MoviePluginImp::DoQuery(
                     compute_scene_pc(scene_json["resultData"]["tplData"]["result"][i],gremlinConnect);
                     scene_json.toString(response_str);
                     *response = response_str;
-		}
+                }
             } else {
                 CNOTICE_LOG("none_answer");
             }
@@ -793,31 +793,61 @@ bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string da
     if (date1.size()==2) {
         std::stringstream ss;
         if (date1>date2){
-            ss<<ptm->tm_year+1901<<date2<<pxq[atoi(date2.c_str())-1];
+            strftime(t, sizeof(t), "%m",ptm);
+            std::string today_month(t);
+            if (today_month>=date1) {
+                ss<<ptm->tm_year+1900<<"1231";
+                date2 = ss.str();
+                ss.str("");
+                ss<<ptm->tm_year+1900<<date1<<"01";
+                date1 = ss.str();
+            }else {
+                ss<<ptm->tm_year+1900<<"0101";
+                date1 = ss.str();
+                ss.str("");
+                ss<<ptm->tm_year+1900<<date2<<pxq[atoi(date2.c_str())-1];
+                date2 = ss.str();
+            }
         }else {
             ss<<ptm->tm_year+1900<<date2<<pxq[atoi(date2.c_str())-1];
+            date2 = ss.str();
+            ss.str("");
+            ss<<ptm->tm_year+1900<<date1<<"01";
+            date1 = ss.str();
         }
-        date2 = ss.str();
-        ss.str("");
-        ss<<ptm->tm_year+1900<<date1<<1;
-        date1 = ss.str();
     }else if (date1.size()==4) {
         std::stringstream ss;
         if (date1>date2){
+            strftime(t, sizeof(t), "%m%d",ptm);
+            std::string today_month(t);
+            if (today_month>=date1) {
+                ss<<ptm->tm_year+1900<<"1231";
+                date2 = ss.str();
+                ss.str("");
+                ss<<ptm->tm_year+1900<<date1;
+                date1 = ss.str();
+            }else {
+                ss<<ptm->tm_year+1900<<"0101";
+                date1 = ss.str();
+                ss.str("");
+                ss<<ptm->tm_year+1900<<date2;
+                date2 = ss.str();
+            }
             ss<<ptm->tm_year+1901<<date2;
         }else {
             ss<<ptm->tm_year+1900<<date2;
+            date2 = ss.str();
+            ss.str("");
+            ss<<ptm->tm_year+1900<<date1;
+            date1 = ss.str();
         }
-        date2 = ss.str();
-        ss.str("");
-        ss<<ptm->tm_year+1900<<date1;
-        date1 = ss.str();
     }
     CDEBUG_LOG("today %s ; date1 %s ; date2 %s",today.c_str(),date1.c_str(),date2.c_str());
     //参数 today + date1 + date2
     if (today>=date1 && today<=date2) {
         return true;
     }
+    return false;
     //日期之内
     //::sofa::ObjectPtr __ret;
     //::sofa::ObjectPtr extra_info;
@@ -1062,7 +1092,7 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json,faci
             scene_json["detailPrice"] = structured_json["detailPrice"].asString();
             CDEBUG_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
         }
-	scene_json.removeMember("structured_info");
+    scene_json.removeMember("structured_info");
     }
 }
 
