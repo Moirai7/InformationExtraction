@@ -746,33 +746,33 @@ bool MoviePluginImp::check_weeks(struct tm *ptm,std::string week1,std::string we
     }
 }
 
-bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
+bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos) {
     char today [9];
     strftime(today, sizeof(today), "%m%d",ptm);
-    std::string today(t);
-    if ((today >= "1201" && today <= "1231") || (today >= "0101" && today <== "0229")) {
-        today = "冬";
-    }else if (today >= "0301" && today <= "0531") {
-        today = "春";
-    }else if (today >= "0601" && today <= "0831") {
-        today = "夏";
-    }else if (today >= "0901" && today <= "1130") {
-        today = "秋";
+    std::string season(today);
+    if ((season >= "1201" && season <= "1231") || (season >= "0101" && season <= "0229")) {
+        season = "冬";
+    }else if (season >= "0301" && season <= "0531") {
+        season = "春";
+    }else if (season >= "0601" && season <= "0831") {
+        season = "夏";
+    }else if (season >= "0901" && season <= "1130") {
+        season = "秋";
     }
     //std::string info="";
-    if (infos.find("春") != std::string::npos && today=="春") {
+    if (infos.find("春") != std::string::npos && season=="春") {
         //info += "\"春季\",";
         return true;
     }
-    if (infos.find("夏") != std::string::npos && today=="夏") {
+    if (infos.find("夏") != std::string::npos && season=="夏") {
         //info += "\"夏季\",";
         return true;
     }
-    if (infos.find("秋") != std::string::npos && today=="秋") {
+    if (infos.find("秋") != std::string::npos && season=="秋") {
         //info += "\"秋季\",";
         return true;
     }
-    if (infos.find("冬") != std::string::npos && today=="冬") {
+    if (infos.find("冬") != std::string::npos && season=="冬") {
         //info += "\"冬季\",";
         return true;
     }
@@ -800,7 +800,7 @@ bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos,faci::knowledg
     //}
 }
 
-bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string date2,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
+bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string date2) {
     char t[9];
     strftime(t, sizeof(t), "%G%m%d",ptm);
     std::string today(t);
@@ -932,13 +932,13 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
         if (tmp.isMember("month")) {
             has_month = true;
             if (tmp["month"].isMember("start") && tmp["month"]["start"].asString()!="0000") {
-                if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString(),gremlinConnect)) {
+                if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString())) {
                     check_month = true;
                 }else {
                     check_month = false;
                 }
             }else if (tmp["month"].isMember("info")) {
-                if (check_infos(ptm,tmp["month"]["info"].asString(),gremlinConnect)) {
+                if (check_infos(ptm,tmp["month"]["info"].asString())) {
                     check_month = true;
                 }
             }
@@ -1048,7 +1048,7 @@ std::string MoviePluginImp::compute_today_openinghours(::faci::graphsearch::Json
         return "";
 }
 
-std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json structured_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
+std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json structured_json) {
     ::faci::graphsearch::Json result = structured_json;
     if (!result.isArray())
     {
@@ -1063,11 +1063,11 @@ std::string MoviePluginImp::compute_today_price(::faci::graphsearch::Json struct
         ::faci::graphsearch::Json tmp = result[i];
         if (tmp.isMember("month")) {
             if (tmp["month"].isMember("start")) {
-                if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString(),gremlinConnect)) {
+                if (check_dates(ptm,tmp["month"]["start"].asString(),tmp["month"]["end"].asString())) {
                     return tmp["price"].asString();
                 }
             }else if (tmp["month"].isMember("info")) {
-                if (check_infos(ptm,tmp["month"]["info"].asString(),gremlinConnect)) {
+                if (check_infos(ptm,tmp["month"]["info"].asString())) {
                     return tmp["price"].asString();
                 } else if (tmp["month"]["info"].asString().find("淡季")!=std::string::npos) {
                     return tmp["price"].asString()+"起";
@@ -1096,7 +1096,7 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json,faci
             CDEBUG_LOG("compute_today_openinghours end : %s",toh.c_str());
         }
         if (structured_json.isMember("price")) {
-            std::string toh = compute_today_price(structured_json["price"],gremlinConnect);
+            std::string toh = compute_today_price(structured_json["price"]);
             if (!toh.empty()) {
                  scene_json["todayPrice"] = toh;
             }
