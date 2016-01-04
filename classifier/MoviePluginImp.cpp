@@ -717,8 +717,8 @@ int64_t MoviePluginImp::DoQuery(
             ::faci::graphsearch::Json scene_json;
             std::string response_str = *response;
             scene_json.fromString(response_str);
-            if (!scene_json.isNull() && scene_json.isMember("resultData") && scene_json["resultData"].isMember("tplData") && scene_json["resultData"]["tplData"].isMember("result")) {
-                for (size_t i=0;i<scene_json["resultData"]["tplData"]["result"].size();++i) {
+            if (!scene_json.isNull() && scene_json.isMember("resultData") && scene_json["resultData"].isMember("tplData") && scene_json["resultData"]["tplData"].isMember("result") && scene_json["resultData"]["tplData"]["result"].isArray()) {
+                for (size_t i=0; i<scene_json["resultData"]["tplData"]["result"].size(); ++i) {
                     compute_scene_pc(scene_json["resultData"]["tplData"]["result"][i],gremlinConnect);
                     scene_json.toString(response_str);
                     *response = response_str;
@@ -739,7 +739,7 @@ bool MoviePluginImp::check_weeks(struct tm *ptm,std::string week1,std::string we
     ss<<ptm->tm_wday;
     std::string week = ss.str();
     CDEBUG_LOG("today %s ; week1 %s ; week2 %s",week.c_str(),week1.c_str(),week2.c_str());
-    if (week>=week1 and week<=week2) {
+    if (week>=week1 && week<=week2) {
         return true;
     }else {
         return false;
@@ -748,41 +748,56 @@ bool MoviePluginImp::check_weeks(struct tm *ptm,std::string week1,std::string we
 
 bool MoviePluginImp::check_infos(struct tm *ptm,std::string infos,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
     char today [9];
-    strftime(today, sizeof(today), "%G%m%d",ptm);
-    std::string info="";
-    if (infos.find("春") != std::string::npos) {
-        info += "\"春季\",";
+    strftime(today, sizeof(today), "%m%d",ptm);
+    std::string today(t);
+    if ((today >= "1201" && today <= "1231") || (today >= "0101" && today <== "0229")) {
+        today = "冬";
+    }else if (today >= "0301" && today <= "0531") {
+        today = "春";
+    }else if (today >= "0601" && today <= "0831") {
+        today = "夏";
+    }else if (today >= "0901" && today <= "1130") {
+        today = "秋";
     }
-    if (infos.find("夏") != std::string::npos) {
-        info += "\"夏季\",";
+    //std::string info="";
+    if (infos.find("春") != std::string::npos && today=="春") {
+        //info += "\"春季\",";
+        return true;
     }
-    if (infos.find("秋") != std::string::npos) {
-        info += "\"秋季\",";
+    if (infos.find("夏") != std::string::npos && today=="夏") {
+        //info += "\"夏季\",";
+        return true;
     }
-    if (infos.find("冬") != std::string::npos) {
-        info += "\"冬季\",";
+    if (infos.find("秋") != std::string::npos && today=="秋") {
+        //info += "\"秋季\",";
+        return true;
     }
-    if (info.empty()) {
-        return false;
+    if (infos.find("冬") != std::string::npos && today=="冬") {
+        //info += "\"冬季\",";
+        return true;
     }
-    info.erase(info.end()-1);
+    return false;
+    //if (info.empty()) {
+    //    return false;
+    //}
+    //info.erase(info.end()-1);
     //请求参数 today + info
     //春夏秋
-    ::sofa::ObjectPtr __ret;
-    ::sofa::ObjectPtr extra_info;
-    std::string spo_query = "search_season(date_from_string(\""+std::string(today)+"\"), ["+info+"])";
-    int req = gremlinConnect->computeQuery(spo_query, __ret, extra_info, "person");
-    CDEBUG_LOG("sa_spo : %d", req);
-    CDEBUG_LOG("spo_query : %s", spo_query.c_str());
-    std::string result = ::sofa::unbox<std::string>(__ret);
-    faci::graphsearch::Json element;
-    element.fromString(result);
-    CDEBUG_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
-    if (element.isMember("data") && element["data"].asString()=="true") {
-        return true;
-    } else {
-        return false;
-    }
+    //::sofa::ObjectPtr __ret;
+    //::sofa::ObjectPtr extra_info;
+    //std::string spo_query = "search_season(date_from_string(\""+std::string(today)+"\"), ["+info+"])";
+    //int req = gremlinConnect->computeQuery(spo_query, __ret, extra_info, "person");
+    //CDEBUG_LOG("sa_spo : %d", req);
+    //CDEBUG_LOG("spo_query : %s", spo_query.c_str());
+    //std::string result = ::sofa::unbox<std::string>(__ret);
+    //faci::graphsearch::Json element;
+    //element.fromString(result);
+    //CDEBUG_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
+    //if (element.isMember("data") && element["data"].asString()=="true") {
+    //    return true;
+    //} else {
+    //    return false;
+    //}
 }
 
 bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string date2,faci::knowledge::ServiceApiServerConnect* gremlinConnect) {
@@ -790,11 +805,15 @@ bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string da
     strftime(t, sizeof(t), "%G%m%d",ptm);
     std::string today(t);
     char *pxq[]={"31","29","31","30","31","30","31","31","30","31","30","31"}; 
+    //有两种数据 一是01,11等 二是0101,1113等
     if (date1.size()==2) {
         std::stringstream ss;
+        //分两种情况，一个是在一年内，如01~05；二是到次年，如11~03
         if (date1>date2){
             strftime(t, sizeof(t), "%m",ptm);
             std::string today_month(t);
+            //到次年的情况，如果当天是12月，则判断date1~1231
+            //如果当天是1月，则判断0101~date2
             if (today_month>=date1) {
                 ss<<ptm->tm_year+1900<<"1231";
                 date2 = ss.str();
@@ -817,6 +836,7 @@ bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string da
         }
     }else if (date1.size()==4) {
         std::stringstream ss;
+        //分两种情况，一个是在一年内，如0101~0501；二是到次年，如1111~0301
         if (date1>date2){
             strftime(t, sizeof(t), "%m%d",ptm);
             std::string today_month(t);
@@ -833,7 +853,6 @@ bool MoviePluginImp::check_dates(struct tm *ptm,std::string date1,std::string da
                 ss<<ptm->tm_year+1900<<date2;
                 date2 = ss.str();
             }
-            ss<<ptm->tm_year+1901<<date2;
         }else {
             ss<<ptm->tm_year+1900<<date2;
             date2 = ss.str();

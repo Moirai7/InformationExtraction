@@ -961,7 +961,8 @@ def Proc(key,line):
 		if line[3].find(u'平日')!=-1 and line[3].find(u'周六')!=-1 and line[3].find(u'周日')!=-1:
 			line[3]=line[3].replace(u'平日',u'周一到周五')
 		if (line[3].find(u'平时')!=-1 or line[3].find(u'平日')!=-1) and line[3].find(u'周末')!=-1:
-			line[3]=line[3].replace(u'平时',u'周一到周六').replace(u'平日',u'周一到周六')
+			line[3]=line[3].replace(u'平时',u'周一到周五').replace(u'平日',u'周一到周五')
+		line[3]=line[3].replace(u'周末',u'周六到周日')
 		for o in outlist:
 			if line[3].find(o) != -1 and line[3].find(u"闭馆前20分钟停止售票")==-1:
 				check = False
