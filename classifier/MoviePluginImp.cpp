@@ -804,18 +804,25 @@ bool MoviePluginImp::is_date_in_holiday(const struct tm *ptm,const std::vector<s
     faci::graphsearch::Json element;
     element.fromString(result);
     CDEBUG_LOG("date in result process\t%s\t%d", result.c_str(), element.size());
-    return (element.isMember("data") && element["data"].asString()=="true") ;
+    if (element.isNull() || !element.isMember("data") || !element["data"].isString()) {
+         CWARNING_LOG("kc request to check holidays failed.");
+         return false;
+    } else if (element["data"].asString()=="true") {
+         return true;
+    } else {
+         return false;
+    }
 }
-//计算营业时间思路：
+//计算营业时间
 std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::faci::graphsearch::Json &structured_json) {
     ::faci::graphsearch::Json result = structured_json["openingHours"];
-    std::string opentime="";
-    std::string closetime="";
-    if (!result.isArray())
+    if (result.isNull() && !result.isArray())
     {
-        CDEBUG_LOG("result is not array");
+        CDEBUG_LOG("result is null or is not array");
         return NULL;
     }
+    std::string opentime="";
+    std::string closetime="";
     for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
@@ -829,29 +836,27 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
             char today [9];
             strftime(today, sizeof(today), "%m%d",ptm);
             std::string date(today);
-            if (tmp["month"].isMember("start") && tmp["month"].isMember("end") && tmp["month"]["start"].asString()!="0000") {
+            if (tmp["month"].isMember("start") && tmp["month"].isMember("end") && tmp["month"]["start"].isString() && tmp["month"]["end"].isString() && tmp["month"]["start"].asString()!="0000" && tmp["month"]["end"].asString()!="0000") {
                 check_month = is_date_in_period(date,tmp["month"]["start"].asString(),tmp["month"]["end"].asString());
-            }else if (tmp["month"].isMember("info")) {//没有具体时间范围，判断季节区间
-                if (is_date_in_season(date,tmp["month"]["info"].asString())) {
-                    check_month = true;
-                }
+            }else if (tmp["month"].isMember("info") && tmp["month"]["info"].isString()) {//没有具体时间范围，判断季节区间
+                check_month = is_date_in_season(date,tmp["month"]["info"].asString());
             }
         }
         //判断星期区间
         if (has_month&&check_month){
             if (tmp.isMember("week")) {
                 has_week = true;
-                if (tmp["week"].isMember("start") && tmp["week"].isMember("end")) {
+                if (tmp["week"].isMember("start") && tmp["week"].isMember("end") && tmp["week"]["start"].isString() && tmp["week"]["end"].isString()) {
                     check_week = is_date_in_week(ptm,tmp["week"]["start"].asString(),tmp["week"]["end"].asString());
                 }
             }
         }
         
         if ((has_month&&check_month)&&(has_week&&check_week)&&(tmp.isMember("hour"))) {
-            if (opentime=="" && tmp["hour"].isMember("opentime")){
+            if (opentime=="" && tmp["hour"].isMember("opentime") && tmp["hour"]["opentime"].isString()){
                 opentime = tmp["hour"]["opentime"].asString();
             }
-            if (closetime=="" && tmp["hour"].isMember("closetime")){
+            if (closetime=="" && tmp["hour"].isMember("closetime") && tmp["hour"]["closetime"].isString()){
                 closetime = tmp["hour"]["closetime"].asString();
             }
             break;
@@ -867,24 +872,27 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
     }
     //有节假日信息，分为两种情况
     result = structured_json["specialHours"];
-    if (!result.isArray())
+    if (result.isNull() && !result.isArray())
     {
-        CDEBUG_LOG("result is not array");
+        CDEBUG_LOG("result is null or is not array");
         return "";
     }
     bool week_close = false;
     for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
-        if (tmp.isMember("type") && tmp.isMember("holiday") && tmp["holiday"].isArray()) {
+        if (tmp.isMember("type") && tmp["type"].isString() && tmp.isMember("holiday") && tmp["holiday"].isArray()) {
             //std::string info="";
             std::vector<std::string> holidays;
             //关门。关门包含特殊情况，如周一关门（节假日除外），因此既是周一又是节假日需开门。
             if (tmp["type"].asString()=="close") {
                 for (size_t j=0; j<tmp["holiday"].size(); j++) {
+                    if (!tmp["holiday"][j].isString()) {
+                        CDEBUG_LOG("result data's format is wrong!");
+                        return "";
+                    }
                     if (tmp["holiday"][j].asString().find("周")==std::string::npos){
                         holidays.push_back(tmp["holiday"][j].asString());
-                        //info += "\""+tmp["holiday"][j].asString()+"\",";
                     }else {
                         //周
                         std::string pxq[]={"日","一","二","三","四","五","六"};
@@ -901,18 +909,15 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
                         return "close";
                     }
                 }
-                //if (!info.empty()) {
-                //    info.erase(info.end()-1);
-                //    if (is_date_in_holiday(ptm,info)) {
-                //        return "close";
-                //    }
-                //}
             }else if (tmp["type"].asString()=="open") {
                 bool check = false;
                 for (size_t j=0; j<tmp["holiday"].size(); j++) {
+                    if (!tmp["holiday"][j].isString()) {
+                        CDEBUG_LOG("result data's format is wrong!");
+                        return "";
+                    }
                     if (tmp["holiday"][j].asString().find("周")==std::string::npos){
                         holidays.push_back(tmp["holiday"][j].asString());
-                        //info+="\""+tmp["holiday"][j].asString()+"\",";
                     }else {
                         //周
                         std::string pxq[]={"日","一","二","三","四","五","六"};
@@ -924,21 +929,15 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
                         }
                     }
                 }
-                if (!holidays.empty()) {
-                    if (is_date_in_holiday(ptm,holidays)) {
-                        return "close";
-                    }
+                if (!holidays.empty() && !check) {
+                    check = is_date_in_holiday(ptm,holidays);
                 }
-                //if (!info.empty()&&!check) {
-                //    info.erase(info.end()-1);
-                //    check = is_date_in_holiday(ptm,info);
-                //}
                 if (check) {
                     if (tmp.isMember("hour")) {
-                        if (tmp["hour"].isMember("opentime")) {
+                        if (tmp["hour"].isMember("opentime") && tmp["hour"]["opentime"].isString()) {
                             opentime = tmp["hour"]["opentime"].asString();
                         }
-                        if (tmp["hour"].isMember("closetime")) {
+                        if (tmp["hour"].isMember("closetime") && tmp["hour"]["closetime"].isString()) {
                             closetime = tmp["hour"]["closetime"].asString();
                         }
                      }
@@ -955,28 +954,32 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
     }else
         return "";
 }
-
+//计算票价
 std::string MoviePluginImp::compute_today_price(const struct tm *ptm, ::faci::graphsearch::Json &structured_json) {
     ::faci::graphsearch::Json result = structured_json;
-    if (!result.isArray())
+    if (result.isNull() && !result.isArray())
     {
-        CDEBUG_LOG("result is not array");
+        CDEBUG_LOG("result is null or is not array");
         return NULL;
     }
     for (size_t i=0; i<result.size(); i++)
     {
         ::faci::graphsearch::Json tmp = result[i];
+        if (!tmp.isMember("price") && !tmp["price"].isString()) {
+            CDEBUG_LOG("result data's format is wrong!");
+            return "";
+        }
         if (tmp.isMember("month")) {
             //有具体时间范围，判断时间区间
             char today [9];
             strftime(today, sizeof(today), "%m%d",ptm);
             std::string date(today);
-            if (tmp["month"].isMember("start") && tmp["month"].isMember("end")) {
-                if (tmp.isMember("price") && is_date_in_period(date,tmp["month"]["start"].asString(),tmp["month"]["end"].asString())) {
+            if (tmp["month"].isMember("start") && tmp["month"].isMember("end") && tmp["month"]["start"].isString() && tmp["month"]["end"].isString()) {
+                if (is_date_in_period(date,tmp["month"]["start"].asString(),tmp["month"]["end"].asString())) {
                     return tmp["price"].asString();
                 }
             //没有具体时间范围，判断季节区间
-            }else if (tmp["month"].isMember("info")) {
+            }else if (tmp["month"].isMember("info") && tmp["month"]["info"].isString()) {
                 if (is_date_in_season(date,tmp["month"]["info"].asString())) {
                     return tmp["price"].asString();
                 } else if (tmp["month"]["info"].asString().find("淡季")!=std::string::npos) {
@@ -987,19 +990,20 @@ std::string MoviePluginImp::compute_today_price(const struct tm *ptm, ::faci::gr
             return tmp["price"].asString();
         }
     }
-    CDEBUG_LOG("None Price");
+    CDEBUG_LOG("This result doesn't have a field named Price");
     return "";
 }
 
 void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
-    if (!scene_json.isNull() && scene_json.isMember("structured_info")) {
+    if (!scene_json.isNull() && scene_json.isMember("structured_info") && scene_json["structured_info"].isString()) {
         std::string structured_info = scene_json["structured_info"].asString();
         ::faci::graphsearch::Json structured_json;
         structured_json.fromString(structured_info);
         std::time_t nowtime;
         nowtime = time(NULL); //获取日历时间 
-        struct tm *ptm=new struct tm;
-        localtime_r(&nowtime,ptm);
+        //struct tm *ptm=new struct tm;
+        //localtime_r(&nowtime,ptm);
+        struct tm *ptm = localtime(&nowtime);
         // 计算当天时间和票价
         if (structured_json.isMember("openingHours")) {
             std::string toh = compute_today_openinghours(ptm,structured_json);
@@ -1015,7 +1019,7 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
             }
             CDEBUG_LOG("compute_today_price end : %s",toh.c_str());
         }
-        delete ptm;
+        //delete ptm;
         // 提取带换行的详细时间与票价
         if (structured_json.isMember("detailTime")) {
             scene_json["detailOpeningHours"] = structured_json["detailTime"].asString();
@@ -1025,7 +1029,7 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
             scene_json["detailPrice"] = structured_json["detailPrice"].asString();
             CDEBUG_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
         }
-    scene_json.removeMember("structured_info");
+        scene_json.removeMember("structured_info");
     }
 }
 
