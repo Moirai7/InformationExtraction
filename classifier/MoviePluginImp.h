@@ -95,13 +95,13 @@ public:
             int64_t* __ret,
             uint64_t handle);
 
-    bool check_weeks(struct tm *ptm,std::string week1,std::string week2) ;
-    bool check_holiday(struct tm *ptm,std::string holiday,faci::knowledge::ServiceApiServerConnect* gremlinConnect) ;
-    bool check_infos(struct tm *ptm,std::string infos,faci::knowledge::ServiceApiServerConnect* gremlinConnect) ;
-    bool check_dates(struct tm *ptm,std::string date1,std::string date2,faci::knowledge::ServiceApiServerConnect* gremlinConnect);
-    std::string compute_today_price(::faci::graphsearch::Json structured_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect);
-    std::string compute_today_openinghours(::faci::graphsearch::Json structured_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect) ;
-    void compute_scene_pc(::faci::graphsearch::Json& scene_json,faci::knowledge::ServiceApiServerConnect* gremlinConnect);
+    bool is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) ;
+    bool is_date_in_season(const std::string& date,const std::string& infos) ;
+    bool is_date_in_period(const std::string& date,const std::string& date1,const std::string& date2);
+    bool is_date_in_holiday(const struct tm *ptm,const std::vector<std::string>& holiday) ;
+    std::string compute_today_price(const struct tm *ptm, ::faci::graphsearch::Json& structured_json);
+    std::string compute_today_openinghours(const struct tm *ptm, ::faci::graphsearch::Json& structured_json) ;
+    void compute_scene_pc(::faci::graphsearch::Json& scene_json);
     int trans_dumi(const SPOThreadFifaData_t* params, const std::string& input, std::string& output);
 };
 
