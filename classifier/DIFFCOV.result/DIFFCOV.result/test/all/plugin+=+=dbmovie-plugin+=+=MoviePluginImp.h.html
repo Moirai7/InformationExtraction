@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gbk" />
+<title>plugin/dbmovie-plugin/MoviePluginImp.h</title>
+<style>
+body { margin: 0; padding: 0 }
+pre { margin: 0 }
+</style>
+<link rel="stylesheet" type="text/css" href="../../prettify.css" />
+<script type="text/javascript" src="../../prettify.js"></script>
+<script type="text/javascript">
+PR['registerLangHandler'](
+	PR['createSimpleLexer']([
+		[PR['PR_PLAIN'],/^[\r\n\f]+/, null, '\r\n\f'],
+	],[
+		['lang-mycode-com', /(^\+\+\+\+.*)/],
+		['lang-mycode-kwd', /(^\#\#\#\#.*)/],
+		['lang-mycode-str', /(^\-\-\-\-.*)/],
+	]),
+	['mycode']);
+PR['registerLangHandler'](
+	PR['createSimpleLexer']([
+	],[
+		['hid', /^\+\+\+\+/],
+		[PR['PR_COMMENT'], /.*/],
+	]),
+	['mycode-com']);
+PR['registerLangHandler'](
+	PR['createSimpleLexer']([
+	],[
+		['hid', /^\#\#\#\#/],
+		[PR['PR_KEYWORD'], /.*/],
+	]),
+	['mycode-kwd']);
+PR['registerLangHandler'](
+	PR['createSimpleLexer']([
+	],[
+		['hid', /^\-\-\-\-/],
+		[PR['PR_STRING'], /.*/, null],
+	]),
+	['mycode-str']);
+	</script>
+</head>
+<body onload="prettyPrint();">
+	<a href="javascript:history.back()">back</a><br />
+<pre class="prettyprint lang-mycode">
+####     98:           bool is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) ;
+####     99:           bool is_date_in_season(const std::string& date,const std::string& infos) ;
+####    100:           bool is_date_in_period(const std::string& date,const std::string& date1,const std::string& date2);
+####    101:           bool is_date_in_holiday(const struct tm *ptm,const std::vector<std::string>& holiday) ;
+####    102:           std::string compute_today_price(const struct tm *ptm, ::faci::graphsearch::Json& structured_json);
+####    103:           std::string compute_today_openinghours(const struct tm *ptm, ::faci::graphsearch::Json& structured_json) ;
+####    104:           void compute_scene_pc(::faci::graphsearch::Json& scene_json);
+
+</pre>
+</body>
+</html>
