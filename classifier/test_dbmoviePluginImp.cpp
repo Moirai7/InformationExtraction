@@ -15,6 +15,8 @@
 #include <com/baidu/wd/knowledge/da/ver_1_0_0.h>
 #include <KGDAServerConnect.h>
 #include <ServiceApiServerConnect.h>
+#include "json/json.h"
+#include "JsonObj.h"
 #include "QueryObject.h"
 
 using namespace ::com::baidu::wd::knowledge::ver_1_0_0;
@@ -330,7 +332,7 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase1)
     ret = kg_plugin->DoQuery(handle, &result, &response);
     controller->wait();
     EXPECT_EQ(0, ret);
-
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
@@ -377,6 +379,7 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase2)
     controller->wait();
     EXPECT_EQ(0, ret);
 
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
@@ -423,6 +426,7 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase3)
     controller->wait();
     EXPECT_EQ(0, ret);
 
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
@@ -469,6 +473,7 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase4)
     controller->wait();
     EXPECT_EQ(0, ret);
 
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
@@ -515,6 +520,7 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase5)
     controller->wait();
     EXPECT_EQ(0, ret);
 
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
@@ -561,6 +567,54 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase6)
     controller->wait();
     EXPECT_EQ(0, ret);
 
+    cout << "src query is: " << ret << endl;
+    controller->reset();
+    controller->set_timeout(500);
+    kg_plugin->QueryDone(handle);
+ }
+
+/**
+ * @brief: 调用旅游结构化接口，增加函数覆盖率
+ **/
+TEST_F(test_KgPluginPersonImp_Structured_suite, testCase7)
+{
+    string query = "中国科学技术馆开放时间";
+    cout << "src query is: " << query << endl;
+    ::sofa::vector<da_resultPtr> da_results;
+    kgdaConnect->daQuery(query, da_results);
+    ASSERT_NE((unsigned)0, da_results.size());
+    QueryParamPtr query_param = ::sofa::create<QueryParam>();
+    query_param->set_da_extra(da_results[0]->extra_des());
+    query_param->set_da_query(da_results[0]->res_query());
+    query_param->set_text_query(da_results[0]->src_query());
+    query_param->set_srcid(28218);
+    KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+    std::string conf_path = "./conf/movie.xml";
+    ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+    controller->set_timeout(500);
+    int64_t ret = kg_plugin->InitOnce(conf_path);
+    controller->wait();
+    ASSERT_EQ(0, ret);
+
+    uint64_t handle;
+    controller->reset();
+    controller->set_timeout(500);
+
+    query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/zhongguokexuejishuguan').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"中国科学技术馆开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+    //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+    ret = kg_plugin->AcceptQuery(query_param, &handle);
+    controller->wait();
+    ASSERT_EQ(0, ret);
+
+    ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+    ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+    controller->reset();
+    controller->set_timeout(500);
+    ret = kg_plugin->DoQuery(handle, &result, &response);
+    controller->wait();
+    EXPECT_EQ(0, ret);
+
+    cout << "src query is: " << ret << endl;
     controller->reset();
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);

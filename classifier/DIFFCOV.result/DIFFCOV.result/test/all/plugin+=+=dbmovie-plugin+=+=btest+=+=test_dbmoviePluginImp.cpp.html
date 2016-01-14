@@ -45,350 +45,411 @@ PR['registerLangHandler'](
 <body onload="prettyPrint();">
 	<a href="javascript:history.back()">back</a><br />
 <pre class="prettyprint lang-mycode">
-++++     58:           }else {
-++++     59:               std::cerr << "./conf/quer_list none" << std::endl;
-++++    100:           cout << "TEST_P src query is: " << query << endl;
-####    280:       
-####    281:       
-####    282:       /**
-####    283:        * @brief:添加旅游结构化的测试案例，增加单测覆盖率
-####    284:        **/
-####    285:       class test_KgPluginPersonImp_Structured_suite : public testing::Test
-####    286:       {
-####    287:       /*    public:
-####    288:               virtual void SetUp(){};
-####    289:               virtual void TearDown(){};
-####    290:       */
-####    291:       };
-####    292:       
-####    293:       /**
-####    294:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    295:        **/
-####    296:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase1)
-####    297:       {
-####    298:           string query = "798艺术区开放时间";
-####    299:           cout << "src query is: " << query << endl;
-####    300:           ::sofa::vector<da_resultPtr> da_results;
-####    301:           kgdaConnect->daQuery(query, da_results);
-####    302:           ASSERT_NE((unsigned)0, da_results.size());
-####    303:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    304:           query_param->set_da_extra(da_results[0]->extra_des());
-####    305:           query_param->set_da_query(da_results[0]->res_query());
-####    306:           query_param->set_text_query(da_results[0]->src_query());
-####    307:           query_param->set_srcid(28218);
-####    308:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    309:           std::string conf_path = "./conf/movie.xml";
-####    310:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    311:           controller->set_timeout(500);
-####    312:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    313:           controller->wait();
-####    314:           ASSERT_EQ(0, ret);
-####    315:       
-####    316:           uint64_t handle;
-####    317:           controller->reset();
-####    318:           controller->set_timeout(500);
-####    319:       
-####    320:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/798yishuqu').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"798艺术区开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    321:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    322:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    323:           controller->wait();
-####    324:           ASSERT_EQ(0, ret);
-####    325:       
-####    326:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    327:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    328:           controller->reset();
-####    329:           controller->set_timeout(500);
-####    330:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    331:           controller->wait();
-####    332:           EXPECT_EQ(0, ret);
-####    333:           cout << "src query is: " << ret << endl;
-####    334:           controller->reset();
-####    335:           controller->set_timeout(500);
-####    336:           kg_plugin->QueryDone(handle);
-####    337:        }
-####    338:       
-####    339:       /**
-####    340:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    341:        **/
-####    342:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase2)
-####    343:       {
-####    344:           string query = "故宫开放时间";
-####    345:           cout << "src query is: " << query << endl;
-####    346:           ::sofa::vector<da_resultPtr> da_results;
-####    347:           kgdaConnect->daQuery(query, da_results);
-####    348:           ASSERT_NE((unsigned)0, da_results.size());
-####    349:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    350:           query_param->set_da_extra(da_results[0]->extra_des());
-####    351:           query_param->set_da_query(da_results[0]->res_query());
-####    352:           query_param->set_text_query(da_results[0]->src_query());
-####    353:           query_param->set_srcid(28218);
-####    354:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    355:           std::string conf_path = "./conf/movie.xml";
-####    356:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    357:           controller->set_timeout(500);
-####    358:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    359:           controller->wait();
-####    360:           ASSERT_EQ(0, ret);
-####    361:       
-####    362:           uint64_t handle;
-####    363:           controller->reset();
-####    364:           controller->set_timeout(500);
-####    365:       
-####    366:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"故宫开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    367:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    368:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    369:           controller->wait();
-####    370:           ASSERT_EQ(0, ret);
-####    371:       
-####    372:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    373:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    374:           controller->reset();
-####    375:           controller->set_timeout(500);
-####    376:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    377:           controller->wait();
-####    378:           EXPECT_EQ(0, ret);
-####    379:       
-####    380:           cout << "src query is: " << ret << endl;
-####    381:           controller->reset();
-####    382:           controller->set_timeout(500);
-####    383:           kg_plugin->QueryDone(handle);
-####    384:        }
-####    385:       
-####    386:       /**
-####    387:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    388:        **/
-####    389:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase3)
-####    390:       {
-####    391:           string query = "黄鹤楼开放时间";
-####    392:           cout << "src query is: " << query << endl;
-####    393:           ::sofa::vector<da_resultPtr> da_results;
-####    394:           kgdaConnect->daQuery(query, da_results);
-####    395:           ASSERT_NE((unsigned)0, da_results.size());
-####    396:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    397:           query_param->set_da_extra(da_results[0]->extra_des());
-####    398:           query_param->set_da_query(da_results[0]->res_query());
-####    399:           query_param->set_text_query(da_results[0]->src_query());
-####    400:           query_param->set_srcid(28218);
-####    401:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    402:           std::string conf_path = "./conf/movie.xml";
-####    403:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    404:           controller->set_timeout(500);
-####    405:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    406:           controller->wait();
-####    407:           ASSERT_EQ(0, ret);
-####    408:       
-####    409:           uint64_t handle;
-####    410:           controller->reset();
-####    411:           controller->set_timeout(500);
-####    412:       
-####    413:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/huanghelou').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"黄鹤楼开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    414:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    415:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    416:           controller->wait();
-####    417:           ASSERT_EQ(0, ret);
-####    418:       
-####    419:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    420:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    421:           controller->reset();
-####    422:           controller->set_timeout(500);
-####    423:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    424:           controller->wait();
-####    425:           EXPECT_EQ(0, ret);
-####    426:       
-####    427:           cout << "src query is: " << ret << endl;
-####    428:           controller->reset();
-####    429:           controller->set_timeout(500);
-####    430:           kg_plugin->QueryDone(handle);
-####    431:        }
-####    432:       
-####    433:       /**
-####    434:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    435:        **/
-####    436:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase4)
-####    437:       {
-####    438:           string query = "深圳欢乐谷开放时间";
-####    439:           cout << "src query is: " << query << endl;
-####    440:           ::sofa::vector<da_resultPtr> da_results;
-####    441:           kgdaConnect->daQuery(query, da_results);
-####    442:           ASSERT_NE((unsigned)0, da_results.size());
-####    443:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    444:           query_param->set_da_extra(da_results[0]->extra_des());
-####    445:           query_param->set_da_query(da_results[0]->res_query());
-####    446:           query_param->set_text_query(da_results[0]->src_query());
-####    447:           query_param->set_srcid(28218);
-####    448:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    449:           std::string conf_path = "./conf/movie.xml";
-####    450:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    451:           controller->set_timeout(500);
-####    452:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    453:           controller->wait();
-####    454:           ASSERT_EQ(0, ret);
-####    455:       
-####    456:           uint64_t handle;
-####    457:           controller->reset();
-####    458:           controller->set_timeout(500);
-####    459:       
-####    460:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/shenzhenhuanlegu').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"深圳欢乐谷开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    461:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    462:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    463:           controller->wait();
-####    464:           ASSERT_EQ(0, ret);
-####    465:       
-####    466:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    467:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    468:           controller->reset();
-####    469:           controller->set_timeout(500);
-####    470:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    471:           controller->wait();
-####    472:           EXPECT_EQ(0, ret);
-####    473:       
-####    474:           cout << "src query is: " << ret << endl;
-####    475:           controller->reset();
-####    476:           controller->set_timeout(500);
-####    477:           kg_plugin->QueryDone(handle);
-####    478:        }
-####    479:       
-####    480:       /**
-####    481:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    482:        **/
-####    483:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase5)
-####    484:       {
-####    485:           string query = "趵突泉开放时间";
-####    486:           cout << "src query is: " << query << endl;
-####    487:           ::sofa::vector<da_resultPtr> da_results;
-####    488:           kgdaConnect->daQuery(query, da_results);
-####    489:           ASSERT_NE((unsigned)0, da_results.size());
-####    490:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    491:           query_param->set_da_extra(da_results[0]->extra_des());
-####    492:           query_param->set_da_query(da_results[0]->res_query());
-####    493:           query_param->set_text_query(da_results[0]->src_query());
-####    494:           query_param->set_srcid(28218);
-####    495:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    496:           std::string conf_path = "./conf/movie.xml";
-####    497:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    498:           controller->set_timeout(500);
-####    499:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    500:           controller->wait();
-####    501:           ASSERT_EQ(0, ret);
-####    502:       
-####    503:           uint64_t handle;
-####    504:           controller->reset();
-####    505:           controller->set_timeout(500);
-####    506:       
-####    507:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/baotuquan').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"趵突泉开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    508:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    509:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    510:           controller->wait();
-####    511:           ASSERT_EQ(0, ret);
-####    512:       
-####    513:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    514:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    515:           controller->reset();
-####    516:           controller->set_timeout(500);
-####    517:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    518:           controller->wait();
-####    519:           EXPECT_EQ(0, ret);
-####    520:       
-####    521:           cout << "src query is: " << ret << endl;
-####    522:           controller->reset();
-####    523:           controller->set_timeout(500);
-####    524:           kg_plugin->QueryDone(handle);
-####    525:        }
-####    526:       
-####    527:       /**
-####    528:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    529:        **/
-####    530:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase6)
-####    531:       {
-####    532:           string query = "东西连岛开放时间";
-####    533:           cout << "src query is: " << query << endl;
-####    534:           ::sofa::vector<da_resultPtr> da_results;
-####    535:           kgdaConnect->daQuery(query, da_results);
-####    536:           ASSERT_NE((unsigned)0, da_results.size());
-####    537:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    538:           query_param->set_da_extra(da_results[0]->extra_des());
-####    539:           query_param->set_da_query(da_results[0]->res_query());
-####    540:           query_param->set_text_query(da_results[0]->src_query());
-####    541:           query_param->set_srcid(28218);
-####    542:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    543:           std::string conf_path = "./conf/movie.xml";
-####    544:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    545:           controller->set_timeout(500);
-####    546:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    547:           controller->wait();
-####    548:           ASSERT_EQ(0, ret);
-####    549:       
-####    550:           uint64_t handle;
-####    551:           controller->reset();
-####    552:           controller->set_timeout(500);
-####    553:       
-####    554:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/dongxiliandao').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"东西连岛开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    555:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    556:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    557:           controller->wait();
-####    558:           ASSERT_EQ(0, ret);
-####    559:       
-####    560:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    561:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    562:           controller->reset();
-####    563:           controller->set_timeout(500);
-####    564:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    565:           controller->wait();
-####    566:           EXPECT_EQ(0, ret);
-####    567:       
-####    568:           cout << "src query is: " << ret << endl;
-####    569:           controller->reset();
-####    570:           controller->set_timeout(500);
-####    571:           kg_plugin->QueryDone(handle);
-####    572:        }
-####    573:       
-####    574:       /**
-####    575:        * @brief: 调用旅游结构化接口，增加函数覆盖率
-####    576:        **/
-####    577:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase7)
-####    578:       {
-####    579:           string query = "中国科学技术馆开放时间";
-####    580:           cout << "src query is: " << query << endl;
-####    581:           ::sofa::vector<da_resultPtr> da_results;
-####    582:           kgdaConnect->daQuery(query, da_results);
-####    583:           ASSERT_NE((unsigned)0, da_results.size());
-####    584:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
-####    585:           query_param->set_da_extra(da_results[0]->extra_des());
-####    586:           query_param->set_da_query(da_results[0]->res_query());
-####    587:           query_param->set_text_query(da_results[0]->src_query());
-####    588:           query_param->set_srcid(28218);
-####    589:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
-####    590:           std::string conf_path = "./conf/movie.xml";
-####    591:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
-####    592:           controller->set_timeout(500);
-####    593:           int64_t ret = kg_plugin->InitOnce(conf_path);
-####    594:           controller->wait();
-####    595:           ASSERT_EQ(0, ret);
-####    596:       
-####    597:           uint64_t handle;
-####    598:           controller->reset();
-####    599:           controller->set_timeout(500);
-####    600:       
-####    601:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/zhongguokexuejishuguan').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"中国科学技术馆开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
-####    602:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
-####    603:           ret = kg_plugin->AcceptQuery(query_param, &handle);
-####    604:           controller->wait();
-####    605:           ASSERT_EQ(0, ret);
-####    606:       
-####    607:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
-####    608:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
-####    609:           controller->reset();
-####    610:           controller->set_timeout(500);
-####    611:           ret = kg_plugin->DoQuery(handle, &result, &response);
-####    612:           controller->wait();
-####    613:           EXPECT_EQ(0, ret);
-####    614:       
-####    615:           cout << "src query is: " << ret << endl;
-####    616:           controller->reset();
-####    617:           controller->set_timeout(500);
-####    618:           kg_plugin->QueryDone(handle);
-####    619:        }
-####    620:       
+####     18:       #include "json/json.h"
+####     19:       #include "JsonObj.h"
+####     60:           }else {
+####     61:               std::cerr << "./conf/quer_list none" << std::endl;
+####    102:           cout << "TEST_P src query is: " << query << endl;
+####    282:       
+####    283:       
+####    284:       /**
+####    285:        * @brief:添加旅游结构化的测试案例，增加单测覆盖率
+####    286:        **/
+####    287:       class test_KgPluginPersonImp_Structured_suite : public testing::Test
+####    288:       {
+####    289:       /*    public:
+####    290:               virtual void SetUp(){};
+####    291:               virtual void TearDown(){};
+####    292:       */
+####    293:       };
+####    294:       
+####    295:       /**
+####    296:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    297:        **/
+####    298:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase1)
+####    299:       {
+####    300:           string query = "798艺术区开放时间";
+####    301:           cout << "src query is: " << query << endl;
+####    302:           ::sofa::vector<da_resultPtr> da_results;
+####    303:           kgdaConnect->daQuery(query, da_results);
+####    304:           ASSERT_NE((unsigned)0, da_results.size());
+####    305:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    306:           query_param->set_da_extra(da_results[0]->extra_des());
+####    307:           query_param->set_da_query(da_results[0]->res_query());
+####    308:           query_param->set_text_query(da_results[0]->src_query());
+####    309:           query_param->set_srcid(28218);
+####    310:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    311:           std::string conf_path = "./conf/movie.xml";
+####    312:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    313:           controller->set_timeout(500);
+####    314:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    315:           controller->wait();
+####    316:           ASSERT_EQ(0, ret);
+####    317:       
+####    318:           uint64_t handle;
+####    319:           controller->reset();
+####    320:           controller->set_timeout(500);
+####    321:       
+####    322:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/798yishuqu').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"798艺术区开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    323:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    324:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    325:           controller->wait();
+####    326:           ASSERT_EQ(0, ret);
+####    327:       
+####    328:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    329:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    330:           controller->reset();
+####    331:           controller->set_timeout(500);
+####    332:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    333:           controller->wait();
+####    334:           EXPECT_EQ(0, ret);
+####    335:           cout << "src query is: " << ret << endl;
+####    336:           controller->reset();
+####    337:           controller->set_timeout(500);
+####    338:           kg_plugin->QueryDone(handle);
+####    339:        }
+####    340:       
+####    341:       /**
+####    342:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    343:        **/
+####    344:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase2)
+####    345:       {
+####    346:           string query = "故宫开放时间";
+####    347:           cout << "src query is: " << query << endl;
+####    348:           ::sofa::vector<da_resultPtr> da_results;
+####    349:           kgdaConnect->daQuery(query, da_results);
+####    350:           ASSERT_NE((unsigned)0, da_results.size());
+####    351:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    352:           query_param->set_da_extra(da_results[0]->extra_des());
+####    353:           query_param->set_da_query(da_results[0]->res_query());
+####    354:           query_param->set_text_query(da_results[0]->src_query());
+####    355:           query_param->set_srcid(28218);
+####    356:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    357:           std::string conf_path = "./conf/movie.xml";
+####    358:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    359:           controller->set_timeout(500);
+####    360:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    361:           controller->wait();
+####    362:           ASSERT_EQ(0, ret);
+####    363:       
+####    364:           uint64_t handle;
+####    365:           controller->reset();
+####    366:           controller->set_timeout(500);
+####    367:       
+####    368:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"故宫开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    369:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    370:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    371:           controller->wait();
+####    372:           ASSERT_EQ(0, ret);
+####    373:       
+####    374:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    375:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    376:           controller->reset();
+####    377:           controller->set_timeout(500);
+####    378:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    379:           controller->wait();
+####    380:           EXPECT_EQ(0, ret);
+####    381:       
+####    382:           cout << "src query is: " << ret << endl;
+####    383:           controller->reset();
+####    384:           controller->set_timeout(500);
+####    385:           kg_plugin->QueryDone(handle);
+####    386:        }
+####    387:       
+####    388:       /**
+####    389:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    390:        **/
+####    391:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase3)
+####    392:       {
+####    393:           string query = "黄鹤楼开放时间";
+####    394:           cout << "src query is: " << query << endl;
+####    395:           ::sofa::vector<da_resultPtr> da_results;
+####    396:           kgdaConnect->daQuery(query, da_results);
+####    397:           ASSERT_NE((unsigned)0, da_results.size());
+####    398:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    399:           query_param->set_da_extra(da_results[0]->extra_des());
+####    400:           query_param->set_da_query(da_results[0]->res_query());
+####    401:           query_param->set_text_query(da_results[0]->src_query());
+####    402:           query_param->set_srcid(28218);
+####    403:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    404:           std::string conf_path = "./conf/movie.xml";
+####    405:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    406:           controller->set_timeout(500);
+####    407:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    408:           controller->wait();
+####    409:           ASSERT_EQ(0, ret);
+####    410:       
+####    411:           uint64_t handle;
+####    412:           controller->reset();
+####    413:           controller->set_timeout(500);
+####    414:       
+####    415:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/huanghelou').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"黄鹤楼开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    416:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    417:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    418:           controller->wait();
+####    419:           ASSERT_EQ(0, ret);
+####    420:       
+####    421:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    422:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    423:           controller->reset();
+####    424:           controller->set_timeout(500);
+####    425:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    426:           controller->wait();
+####    427:           EXPECT_EQ(0, ret);
+####    428:       
+####    429:           cout << "src query is: " << ret << endl;
+####    430:           controller->reset();
+####    431:           controller->set_timeout(500);
+####    432:           kg_plugin->QueryDone(handle);
+####    433:        }
+####    434:       
+####    435:       /**
+####    436:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    437:        **/
+####    438:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase4)
+####    439:       {
+####    440:           string query = "深圳欢乐谷开放时间";
+####    441:           cout << "src query is: " << query << endl;
+####    442:           ::sofa::vector<da_resultPtr> da_results;
+####    443:           kgdaConnect->daQuery(query, da_results);
+####    444:           ASSERT_NE((unsigned)0, da_results.size());
+####    445:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    446:           query_param->set_da_extra(da_results[0]->extra_des());
+####    447:           query_param->set_da_query(da_results[0]->res_query());
+####    448:           query_param->set_text_query(da_results[0]->src_query());
+####    449:           query_param->set_srcid(28218);
+####    450:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    451:           std::string conf_path = "./conf/movie.xml";
+####    452:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    453:           controller->set_timeout(500);
+####    454:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    455:           controller->wait();
+####    456:           ASSERT_EQ(0, ret);
+####    457:       
+####    458:           uint64_t handle;
+####    459:           controller->reset();
+####    460:           controller->set_timeout(500);
+####    461:       
+####    462:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/shenzhenhuanlegu').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"深圳欢乐谷开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    463:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    464:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    465:           controller->wait();
+####    466:           ASSERT_EQ(0, ret);
+####    467:       
+####    468:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    469:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    470:           controller->reset();
+####    471:           controller->set_timeout(500);
+####    472:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    473:           controller->wait();
+####    474:           EXPECT_EQ(0, ret);
+####    475:       
+####    476:           cout << "src query is: " << ret << endl;
+####    477:           controller->reset();
+####    478:           controller->set_timeout(500);
+####    479:           kg_plugin->QueryDone(handle);
+####    480:        }
+####    481:       
+####    482:       /**
+####    483:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    484:        **/
+####    485:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase5)
+####    486:       {
+####    487:           string query = "趵突泉开放时间";
+####    488:           cout << "src query is: " << query << endl;
+####    489:           ::sofa::vector<da_resultPtr> da_results;
+####    490:           kgdaConnect->daQuery(query, da_results);
+####    491:           ASSERT_NE((unsigned)0, da_results.size());
+####    492:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    493:           query_param->set_da_extra(da_results[0]->extra_des());
+####    494:           query_param->set_da_query(da_results[0]->res_query());
+####    495:           query_param->set_text_query(da_results[0]->src_query());
+####    496:           query_param->set_srcid(28218);
+####    497:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    498:           std::string conf_path = "./conf/movie.xml";
+####    499:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    500:           controller->set_timeout(500);
+####    501:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    502:           controller->wait();
+####    503:           ASSERT_EQ(0, ret);
+####    504:       
+####    505:           uint64_t handle;
+####    506:           controller->reset();
+####    507:           controller->set_timeout(500);
+####    508:       
+####    509:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/baotuquan').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"趵突泉开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    510:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    511:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    512:           controller->wait();
+####    513:           ASSERT_EQ(0, ret);
+####    514:       
+####    515:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    516:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    517:           controller->reset();
+####    518:           controller->set_timeout(500);
+####    519:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    520:           controller->wait();
+####    521:           EXPECT_EQ(0, ret);
+####    522:       
+####    523:           cout << "src query is: " << ret << endl;
+####    524:           controller->reset();
+####    525:           controller->set_timeout(500);
+####    526:           kg_plugin->QueryDone(handle);
+####    527:        }
+####    528:       
+####    529:       /**
+####    530:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    531:        **/
+####    532:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase6)
+####    533:       {
+####    534:           string query = "东西连岛开放时间";
+####    535:           cout << "src query is: " << query << endl;
+####    536:           ::sofa::vector<da_resultPtr> da_results;
+####    537:           kgdaConnect->daQuery(query, da_results);
+####    538:           ASSERT_NE((unsigned)0, da_results.size());
+####    539:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    540:           query_param->set_da_extra(da_results[0]->extra_des());
+####    541:           query_param->set_da_query(da_results[0]->res_query());
+####    542:           query_param->set_text_query(da_results[0]->src_query());
+####    543:           query_param->set_srcid(28218);
+####    544:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    545:           std::string conf_path = "./conf/movie.xml";
+####    546:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    547:           controller->set_timeout(500);
+####    548:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    549:           controller->wait();
+####    550:           ASSERT_EQ(0, ret);
+####    551:       
+####    552:           uint64_t handle;
+####    553:           controller->reset();
+####    554:           controller->set_timeout(500);
+####    555:       
+####    556:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/dongxiliandao').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"东西连岛开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    557:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    558:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    559:           controller->wait();
+####    560:           ASSERT_EQ(0, ret);
+####    561:       
+####    562:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    563:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    564:           controller->reset();
+####    565:           controller->set_timeout(500);
+####    566:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    567:           controller->wait();
+####    568:           EXPECT_EQ(0, ret);
+####    569:       
+####    570:           cout << "src query is: " << ret << endl;
+####    571:           controller->reset();
+####    572:           controller->set_timeout(500);
+####    573:           kg_plugin->QueryDone(handle);
+####    574:        }
+####    575:       
+####    576:       /**
+####    577:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    578:        **/
+####    579:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase7)
+####    580:       {
+####    581:           string query = "中国科学技术馆开放时间";
+####    582:           cout << "src query is: " << query << endl;
+####    583:           ::sofa::vector<da_resultPtr> da_results;
+####    584:           kgdaConnect->daQuery(query, da_results);
+####    585:           ASSERT_NE((unsigned)0, da_results.size());
+####    586:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    587:           query_param->set_da_extra(da_results[0]->extra_des());
+####    588:           query_param->set_da_query(da_results[0]->res_query());
+####    589:           query_param->set_text_query(da_results[0]->src_query());
+####    590:           query_param->set_srcid(28218);
+####    591:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    592:           std::string conf_path = "./conf/movie.xml";
+####    593:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    594:           controller->set_timeout(500);
+####    595:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    596:           controller->wait();
+####    597:           ASSERT_EQ(0, ret);
+####    598:       
+####    599:           uint64_t handle;
+####    600:           controller->reset();
+####    601:           controller->set_timeout(500);
+####    602:       
+####    603:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/zhongguokexuejishuguan').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"中国科学技术馆开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    604:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    605:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    606:           controller->wait();
+####    607:           ASSERT_EQ(0, ret);
+####    608:       
+####    609:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    610:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    611:           controller->reset();
+####    612:           controller->set_timeout(500);
+####    613:           ret = kg_plugin->DoQuery(handle, &result, &response);
+####    614:           controller->wait();
+####    615:           EXPECT_EQ(0, ret);
+####    616:       
+####    617:           cout << "src query is: " << ret << endl;
+####    618:           controller->reset();
+####    619:           controller->set_timeout(500);
+####    620:           kg_plugin->QueryDone(handle);
+####    621:        }
+####    622:       
+####    623:       
+####    624:       /**
+####    625:        * @brief: 调用旅游结构化接口，增加函数覆盖率
+####    626:        **/
+####    627:       TEST_F(test_KgPluginPersonImp_Structured_suite, testCase8)
+####    628:       {
+####    629:           string query = "故宫开放时间";
+####    630:           cout << "src query is: " << query << endl;
+####    631:           ::sofa::vector<da_resultPtr> da_results;
+####    632:           kgdaConnect->daQuery(query, da_results);
+####    633:           ASSERT_NE((unsigned)0, da_results.size());
+####    634:           QueryParamPtr query_param = ::sofa::create<QueryParam>();
+####    635:           query_param->set_da_extra(da_results[0]->extra_des());
+####    636:           query_param->set_da_query(da_results[0]->res_query());
+####    637:           query_param->set_text_query(da_results[0]->src_query());
+####    638:           query_param->set_srcid(28218);
+####    639:           KgPluginPtr kg_plugin = ::sofa::create<KgPlugin>("imp.com.baidu.wd.knowledge.ver_1_0_0.MoviePluginImp");
+####    640:           std::string conf_path = "./conf/movie.xml";
+####    641:           ::sofa::AsyncControllerPtr controller = ::sofa::new_async_controller();
+####    642:           controller->set_timeout(500);
+####    643:           int64_t ret = kg_plugin->InitOnce(conf_path);
+####    644:           controller->wait();
+####    645:           ASSERT_EQ(0, ret);
+####    646:       
+####    647:           uint64_t handle;
+####    648:           controller->reset();
+####    649:           controller->set_timeout(500);
+####    650:       
+####    651:           query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\",\"domain_type\":\"norm\",\"feature\":null,\"intent\":\"\",\"objects\":\"\",\"qp_type\":\"1\",\"query\":\"故宫开放时间\",\"query_type\":\"None\",\"spo\":\"xxx\"}]}");
+####    652:           //query_param->set_da_query("{\"result\":[{\"cmd\":\"g.has('sid',MATCH,'http://lvyou.baidu.com/gugong').with('*')#openingHours\"}]}");
+####    653:           ret = kg_plugin->AcceptQuery(query_param, &handle);
+####    654:           controller->wait();
+####    655:           ASSERT_EQ(0, ret);
+####    656:       
+####    657:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr > result;
+####    658:           ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr > response;
+####    659:           controller->reset();
+####    660:           controller->set_timeout(500);
+####    661:           std::string input = "{\"structured_info\": {\"openingHours\": [{\"week\": {\"start\": \"1\", \"end\": \"7\"}, \"type\": \"open\", \"hour\": {\"entertime\": \"16:10\", \"opentime\": \"08:30\", \"buytime\": \"16:00\", \"closetime\": \"17:00\"}, \"month\": {\"info\": \"旺季\", \"start\": \"0401\", \"end\": \"1031\"}}, {\"week\": {\"start\": \"1\", \"end\": \"7\"}, \"type\": \"open\", \"hour\": {\"entertime\": \"15:40\", \"opentime\": \"08:30\", \"buytime\": \"15:30\", \"closetime\": \"16:30\"}, \"month\": {\"info\": \"淡季\", \"start\": \"1101\", \"end\": \"0331\"}}], \"price\": [{\"price\": \"60元\", \"month\": {\"info\": \"旺季\", \"start\": \"0401\", \"end\": \"1031\"}}, {\"price\": \"40元\", \"month\": {\"info\": \"淡季\", \"start\": \"1101\", \"end\": \"0331\"}}, {\"price\": \"60元\", \"month\": {\"info\": \"旺季\", \"start\": \"0401\", \"end\": \"1031\"}}, {\"price\": \"40元\", \"month\": {\"info\": \"淡季\", \"start\": \"1101\", \"end\": \"0331\"}}], \"detailTime\": \"1. 旺季（4月1日~10月31日）：08:30~17:00 停止售票时间：16:00 停止入场时间：16:10 \\n2. 淡季（11月1日~3月31日）：08:30~16:30 停止售票时间：15:30 停止入场时间：15:40 \\nTips：除法定节假日和暑期（7月1日~8月31日）外，故宫博物院全年实行周一下午闭馆的措施。每周一开馆时间为08:30~12:00，停止售票时间为11:00，停止检票时间为11:10，闭馆时间为12:00。\", \"specialHours\": [{\"holiday\": [\"暑期\", \"节假日\"], \"type\": \"open\"}, {\"holiday\": [\"周一\"], \"type\": \"open\", \"hour\": {\"opentime\": \"08:30\", \"closetime\": \"12:00\"}}], \"detailPrice\": \"旺季（4月1日~10月31日）：60.00元 \\n淡季（11月1日~3月31日）：40.00元 珍宝馆（即进入宁寿宫区，含戏曲馆、石鼓馆）：10.00元 钟表馆（即进入奉先殿区）：10.00元\\n旺季（4月1日~10月31日）：60.00元 \\n淡季（11月1日~3月31日）：40.00元 珍宝馆（即进入宁寿宫区，含戏曲馆、石鼓馆）：10.00元 钟表馆（即进入奉先殿区）：10.00元\"}}";
+####    662:           //ret = kg_plugin->DoQuery(handle, &result, &response);
+####    663:           //controller->wait();
+####    664:           //EXPECT_EQ(0, ret);
+####    665:           ::faci::graphsearch::Json structured_json;
+####    666:           structured_json.fromString(input);
+####    667:           struct tm pm;
+####    668:           pm.tm_hour = 12;
+####    669:           pm.tm_min = 0;
+####    670:           pm.tm_sec = 0;
+####    671:           pm.tm_year = 2016-1900;
+####    672:           pm.tm_mon = 2-1;
+####    673:           pm.tm_mday = 8;
+####    674:           //kg_plugin->compute_today_price(pm,structured_json);
+####    675:           controller->wait();
+####    676:       
+####    677:           cout << "src query is: " << ret << endl;
+####    678:           controller->reset();
+####    679:           controller->set_timeout(500);
+####    680:           kg_plugin->QueryDone(handle);
+####    681:        }
 
 </pre>
 </body>

@@ -48,77 +48,77 @@ PR['registerLangHandler'](
 ####     17:       #include <time.h> 
 ####     18:       #include <vector>
 ####     19:       
-++++    173:           }
-----    277:  -->F     if (output == NULL){
-++++    282:           size_t pos_start = 0;
-++++    283:    TF     while (std::string::npos != (pos_end = input.find_first_of(split,pos_start))){
-++++    284:               (*output).push_back(input.substr(pos_start, pos_end - pos_start));
-++++    285:               pos_start = pos_end + 1;
-++++    286:           }
-++++    287:  -->T     if (pos_start <= input.size() - 1){
-++++    288:               (*output).push_back(input.substr(pos_start, input.size() - pos_start));
-++++    289:           }
-++++    290:           return (*output).size() > 0;
+----    173:           }
+----    277:   -->     if (output == NULL){
+----    282:           size_t pos_start = 0;
+----    283:   -->     while (std::string::npos != (pos_end = input.find_first_of(split,pos_start))){
+----    284:               (*output).push_back(input.substr(pos_start, pos_end - pos_start));
+----    285:               pos_start = pos_end + 1;
+----    286:           }
+----    287:   -->     if (pos_start <= input.size() - 1){
+----    288:               (*output).push_back(input.substr(pos_start, input.size() - pos_start));
+----    289:           }
+----    290:           return (*output).size() > 0;
 ####    302:       
 ----    386:                       std::string hot_string=element[k]["viewCount"][(size_t)0].asString();
 ----    387:                       cur_hot=atoi(hot_string.c_str());
 ----    393:                   CNOTICE_LOG("k: %d cur hot:%d",k, cur_hot);
 ----    399:                       CNOTICE_LOG("final process_type:%s k:%d hot:%d", result_type.c_str(), k, cur_hot);
-++++    522:                   jump_url=new_value;
+----    522:                   jump_url=new_value;
 ----    532:                   jump_url=new_value;
-++++    562:    TF                 if (s_entity[*iter].size() >=1 && s_entity[*iter][s_entity[*iter].size()-1].isString()) {
-++++    563:                           new_value += s_entity[*iter][s_entity[*iter].size()-1].asString();
-++++    564:                           CDEBUG_LOG("final_new_value is :%s\t", new_value.c_str());
-++++    565:                       }
-++++    567:    TF                 if (*iter == "regionalReleaseDate"){
-++++    568:                           std::vector<std::string> split_result;
-++++    569:                           int len = split_words(new_value, ",", &split_result);
-++++    570:                           len = split_result.size();
-++++    572:                           CDEBUG_LOG("regionalReleaseDate  is :%s\t",new_value.c_str());
-++++    575:                               if (split_result[i].find(str)!=std::string::npos){
-++++    576:                                   new_value = split_result[i].substr(0 , (split_result[i].size()-str.size()-2));
-++++    577:                                   tag = 1;
-++++    578:                                   break ;
-++++    579:                               }
-++++    580:                           }
-++++    581:                           if (tag == 0){
-++++    582:                               new_value = split_result[0];
-++++    583:                               CDEBUG_LOG("after_process regionalReleaseDate  is :%s\t",new_value.c_str());
-++++    585:                       }
-++++    590:                           CDEBUG_LOG("after_process description  is :%s\t",new_value.c_str());
-++++    591:                       }
-++++    593:    TF                 if (*iter == "@FROM_URL"){
-++++    594:                           std::vector<std::string> split_result;
-++++    595:                           split_words(new_value, ",", &split_result);
-++++    596:                           new_value = split_result[0] ;
-++++    597:                           CDEBUG_LOG("fromurl is :%s\t",new_value.c_str());
-++++    598:                       }
-++++    599:                       s_entity[*iter] = new_value;
-++++    601:               }
-++++    602:               s_entity.toString(tmp_result);
-++++    603:               CDEBUG_LOG("search result_after\t%s", tmp_result.c_str());
-++++    604:  -->T         if (s_entity.isMember("_id") && (s_entity["_id"].isUInt())){
-++++    686:           CNOTICE_LOG("ytx searchp search_prop \t%s\t%s", display_config.searchp.c_str(),display_config.search_prop.c_str());
-++++    692:           CDEBUG_LOG("display__ytx\t%s", (*response).c_str());
-++++    698:           //旅游产品时间与票价计算
-++++    699:    TF     if (result_type == "Scene") {
-++++    700:  -->T         if (fifadata_handle->client_name=="us" || fifadata_handle->client_name=="") {
-++++    701:                   ::faci::graphsearch::Json scene_json;
-++++    702:                   std::string response_str = *response;
-++++    703:                   scene_json.fromString(response_str);
-++++    704:  -->T             if (!scene_json.isNull() && scene_json.isMember("resultData") && scene_json["resultData"].isMember("tplData") && scene_json["resultData"]["tplData"].isMember("result") && scene_json["resultData"]["tplData"]["result"].isArray()) {
-++++    705:    TF                 for (size_t i=0; i<scene_json["resultData"]["tplData"]["result"].size(); ++i) {
-++++    706:                           compute_scene_pc(scene_json["resultData"]["tplData"]["result"][i]);
-++++    707:                           scene_json.toString(response_str);
-++++    708:                           *response = response_str;
-++++    709:                       }
-++++    710:                   } else {
-++++    711:                       CNOTICE_LOG("The json couldn't be parsed");
-++++    712:                   }
-++++    713:               }
-++++    714:           }
-++++    715:       
-++++    737:       }
+----    562:   -->                 if (s_entity[*iter].size() >=1 && s_entity[*iter][s_entity[*iter].size()-1].isString()) {
+----    563:                           new_value += s_entity[*iter][s_entity[*iter].size()-1].asString();
+----    564:                           CDEBUG_LOG("final_new_value is :%s\t", new_value.c_str());
+----    565:                       }
+----    567:   -->                 if (*iter == "regionalReleaseDate"){
+----    568:                           std::vector<std::string> split_result;
+----    569:                           int len = split_words(new_value, ",", &split_result);
+----    570:                           len = split_result.size();
+----    572:                           CDEBUG_LOG("regionalReleaseDate  is :%s\t",new_value.c_str());
+----    575:                               if (split_result[i].find(str)!=std::string::npos){
+----    576:                                   new_value = split_result[i].substr(0 , (split_result[i].size()-str.size()-2));
+----    577:                                   tag = 1;
+----    578:                                   break ;
+----    579:                               }
+----    580:                           }
+----    581:                           if (tag == 0){
+----    582:                               new_value = split_result[0];
+----    583:                               CDEBUG_LOG("after_process regionalReleaseDate  is :%s\t",new_value.c_str());
+----    585:                       }
+----    590:                           CDEBUG_LOG("after_process description  is :%s\t",new_value.c_str());
+----    591:                       }
+----    593:   -->                 if (*iter == "@FROM_URL"){
+----    594:                           std::vector<std::string> split_result;
+----    595:                           split_words(new_value, ",", &split_result);
+----    596:                           new_value = split_result[0] ;
+----    597:                           CDEBUG_LOG("fromurl is :%s\t",new_value.c_str());
+----    598:                       }
+----    599:                       s_entity[*iter] = new_value;
+----    601:               }
+----    602:               s_entity.toString(tmp_result);
+----    603:               CDEBUG_LOG("search result_after\t%s", tmp_result.c_str());
+----    604:   -->         if (s_entity.isMember("_id") && (s_entity["_id"].isUInt())){
+----    686:           CNOTICE_LOG("ytx searchp search_prop \t%s\t%s", display_config.searchp.c_str(),display_config.search_prop.c_str());
+----    692:           CDEBUG_LOG("display__ytx\t%s", (*response).c_str());
+----    698:           //旅游产品时间与票价计算
+----    699:   -->     if (result_type == "Scene") {
+----    700:   -->         if (fifadata_handle->client_name=="us" || fifadata_handle->client_name=="") {
+----    701:                   ::faci::graphsearch::Json scene_json;
+----    702:                   std::string response_str = *response;
+----    703:                   scene_json.fromString(response_str);
+----    704:   -->             if (!scene_json.isNull() && scene_json.isMember("resultData") && scene_json["resultData"].isMember("tplData") && scene_json["resultData"]["tplData"].isMember("result") && scene_json["resultData"]["tplData"]["result"].isArray()) {
+----    705:   -->                 for (size_t i=0; i<scene_json["resultData"]["tplData"]["result"].size(); ++i) {
+----    706:                           compute_scene_pc(scene_json["resultData"]["tplData"]["result"][i]);
+----    707:                           scene_json.toString(response_str);
+----    708:                           *response = response_str;
+----    709:                       }
+----    710:                   } else {
+----    711:                       CNOTICE_LOG("The json couldn't be parsed");
+----    712:                   }
+----    713:               }
+----    714:           }
+----    715:       
+----    737:       }
 ####    738:       //判断当天是否属于周几到周几的星期范围
 ----    739:   --> bool MoviePluginImp::is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) {
 ----    740:           std::stringstream ss;
@@ -363,43 +363,44 @@ PR['registerLangHandler'](
 ----    981:           CDEBUG_LOG("This result doesn't have a field named Price");
 ----    982:           return "";
 ----    983:       }
-++++    985:     X void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
-++++    986:    TF     if (!scene_json.isNull() && scene_json.isMember("structured_info")) {
-++++    987:               ::faci::graphsearch::Json structured_json = scene_json["structured_info"];
-++++    988:               std::time_t nowtime;
-++++    989:               nowtime = time(NULL); //获取日历时间 
-++++    990:               //struct tm *ptm=new struct tm;
-++++    991:               //localtime_r(&nowtime,ptm);
-++++    992:               struct tm *ptm = localtime(&nowtime);
-++++    993:               // 计算当天时间和票价
-----    994:  -->F         if (structured_json.isMember("openingHours")) {
-----    995:                   std::string toh = compute_today_openinghours(ptm,structured_json);
-----    996:   -->             if (!toh.empty()) {
-----    997:                        scene_json["todayOpeningHours"] = toh;
-----    998:                   }
-----    999:                   CDEBUG_LOG("compute_today_openinghours end : %s",toh.c_str());
-----   1000:               }
-----   1001:  -->F         if (structured_json.isMember("price")) {
-----   1002:                   std::string toh = compute_today_price(ptm,structured_json["price"]);
-----   1003:   -->             if (!toh.empty()) {
-----   1004:                        scene_json["todayPrice"] = toh;
-----   1005:                   }
-----   1006:                   CDEBUG_LOG("compute_today_price end : %s",toh.c_str());
-----   1007:               }
-++++   1008:               //delete ptm;
-++++   1009:               // 提取带换行的详细时间与票价
-----   1010:  -->F         if (structured_json.isMember("detailTime")) {
-----   1011:                   scene_json["detailOpeningHours"] = structured_json["detailTime"].asString();
-----   1012:                   CDEBUG_LOG("detailOpeningHours end : %s",structured_json["detailTime"].asString().c_str());
-----   1013:               }
-----   1014:  -->F         if (structured_json.isMember("detailPrice")) {
-----   1015:                   scene_json["detailPrice"] = structured_json["detailPrice"].asString();
-----   1016:                   CDEBUG_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
-----   1017:               }
-++++   1018:               scene_json.removeMember("structured_info");
-++++   1019:           }
-++++   1020:       }
-####   1021:       
+----    985:   --> void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
+----    986:   -->     if (!scene_json.isNull() && scene_json.isMember("structured_info")) {
+----    987:               ::faci::graphsearch::Json structured_json;
+----    988:               structured_json = scene_json["structured_info"];
+----    989:               std::time_t nowtime;
+----    990:               nowtime = time(NULL); //获取日历时间 
+----    991:               //struct tm *ptm=new struct tm;
+----    992:               //localtime_r(&nowtime,ptm);
+----    993:               struct tm *ptm = localtime(&nowtime);
+----    994:               // 计算当天时间和票价
+----    995:   -->         if (structured_json.isMember("openingHours")) {
+----    996:                   std::string toh = compute_today_openinghours(ptm,structured_json);
+----    997:   -->             if (!toh.empty()) {
+----    998:                        scene_json["todayOpeningHours"] = toh;
+----    999:                   }
+----   1000:                   CDEBUG_LOG("compute_today_openinghours end : %s",toh.c_str());
+----   1001:               }
+----   1002:   -->         if (structured_json.isMember("price")) {
+----   1003:                   std::string toh = compute_today_price(ptm,structured_json["price"]);
+----   1004:   -->             if (!toh.empty()) {
+----   1005:                        scene_json["todayPrice"] = toh;
+----   1006:                   }
+----   1007:                   CDEBUG_LOG("compute_today_price end : %s",toh.c_str());
+----   1008:               }
+----   1009:               //delete ptm;
+----   1010:               // 提取带换行的详细时间与票价
+----   1011:   -->         if (structured_json.isMember("detailTime")) {
+----   1012:                   scene_json["detailOpeningHours"] = structured_json["detailTime"].asString();
+----   1013:                   CDEBUG_LOG("detailOpeningHours end : %s",structured_json["detailTime"].asString().c_str());
+----   1014:               }
+----   1015:   -->         if (structured_json.isMember("detailPrice")) {
+----   1016:                   scene_json["detailPrice"] = structured_json["detailPrice"].asString();
+----   1017:                   CDEBUG_LOG("detailPrice end : %s",structured_json["detailPrice"].asString().c_str());
+----   1018:               }
+----   1019:               scene_json.removeMember("structured_info");
+----   1020:           }
+----   1021:       }
+####   1022:       
 
 </pre>
 </body>

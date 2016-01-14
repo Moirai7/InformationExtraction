@@ -984,7 +984,11 @@ std::string MoviePluginImp::compute_today_price(const struct tm *ptm, ::faci::gr
 
 void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
     if (!scene_json.isNull() && scene_json.isMember("structured_info")) {
-        ::faci::graphsearch::Json structured_json = scene_json["structured_info"];
+        ::faci::graphsearch::Json structured_json;
+        structured_json = scene_json["structured_info"];
+        std::string structured_str;
+        structured_json.toString(structured_str);
+        CDEBUG_LOG("structured_info input : %s",structured_str.c_str());
         std::time_t nowtime;
         nowtime = time(NULL); //获取日历时间 
         //struct tm *ptm=new struct tm;
