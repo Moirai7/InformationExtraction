@@ -14,9 +14,6 @@
 #include "comlogplugin.h"
 #include "cronoapd.h"
 #include <fstream>
-#include <time.h> 
-#include <vector>
-
 namespace imp {
 namespace com {
 namespace baidu {
@@ -170,7 +167,7 @@ int64_t MoviePluginImp::InitOnce(
             }
         }
         mapedge_all.insert(std::pair< std::string, std::map<std::string, std::string> >(type_now, mappingedge));
-    }
+	}
     //加载配置结束
     CNOTICE_LOG("load conf ok");
     return 0;
@@ -201,13 +198,13 @@ int64_t MoviePluginImp::AcceptQuery(
     *handle = (uint64_t)fifadata_handle;
     fifadata_handle->src_query = query_param->text_query();
     if(query_param->da_query() == "" || query_param->da_query().length() < 5){
-        CFATAL_LOG("kg da query parse failed");
+        CDEBUG_LOG("kg da query parse failed");
         return -1;
     }
     fifadata_handle->client_name = query_param->ClientName();
     fifadata_handle->norm_query = query_param->norm_query();
     //如果来源是度秘,先转成wise,并备份真实来源
-    if (fifadata_handle->client_name == "du_aries")
+    if (fifadata_handle->client_name == "du_us" || fifadata_handle->client_name == "du_aries")
     {
         fifadata_handle->client_name_real = fifadata_handle->client_name;
         fifadata_handle->client_name = "wise-us";
@@ -218,8 +215,8 @@ int64_t MoviePluginImp::AcceptQuery(
         fifadata_handle->client_name_real = "";
     }
 
-    CNOTICE_LOG("query_param->client_name : %s", query_param->ClientName().c_str());
-    CNOTICE_LOG("namedalog daquery daextra %s\t%s",
+    CDEBUG_LOG("query_param->client_name : %s", query_param->ClientName().c_str());
+    CDEBUG_LOG("namedalog daquery daextra %s\t%s",
             query_param->da_query().c_str(), query_param->da_extra().c_str());
     CDEBUG_LOG("%s : %s : %lu", fifadata_handle->src_query.c_str(), query_param->da_query().c_str(), (uint64_t)fifadata_handle);
     fifadata_handle->spo_query = query_param->da_query();
@@ -243,7 +240,7 @@ int64_t MoviePluginImp::AcceptQuery(
         }
         else
         {
-            CFATAL_LOG("query:%s get proprerty failed", fifadata_handle->src_query.c_str());
+            CDEBUG_LOG("query:%s get proprerty failed", fifadata_handle->src_query.c_str());
             return -1;
         }
    
@@ -252,7 +249,7 @@ int64_t MoviePluginImp::AcceptQuery(
         boost::split(result, da_query, boost::is_any_of("#"));
         if (result.size()!=2)
         {
-            CFATAL_LOG("query:%s get proprerty failed", fifadata_handle->src_query.c_str());
+            CDEBUG_LOG("query:%s get proprerty failed", fifadata_handle->src_query.c_str());
             return -1;
         }
         fifadata_handle->spo_query = result[0];
@@ -274,20 +271,20 @@ void MoviePluginImp::async_AcceptQuery(
     SOFA_ASYNC_TO_SYNC(__ret_type, AcceptQuery, query_param, handle);
 }
 inline bool split_words( std::string &input , std::string split , std::vector<std::string> *output){
-    if (output == NULL){
-        CFATAL_LOG("split_output point is null");
+	if (output == NULL){
+        CDEBUG_LOG("split_output point is null");
         return -1;
     }
     size_t pos_end = 0;
-    size_t pos_start = 0;
-    while (std::string::npos != (pos_end = input.find_first_of(split,pos_start))){
-        (*output).push_back(input.substr(pos_start, pos_end - pos_start));
-        pos_start = pos_end + 1;
-    }
-    if (pos_start <= input.size() - 1){
-        (*output).push_back(input.substr(pos_start, input.size() - pos_start));
-    }
-    return (*output).size() > 0;
+	size_t pos_start = 0;
+	while (std::string::npos != (pos_end = input.find_first_of(split,pos_start))){
+		(*output).push_back(input.substr(pos_start, pos_end - pos_start));
+		pos_start = pos_end + 1;
+	}
+	if (pos_start <= input.size() - 1){
+		(*output).push_back(input.substr(pos_start, input.size() - pos_start));
+	}
+	return (*output).size() > 0;
 }
 
 inline int string_to_int(std::string &input){
@@ -295,16 +292,16 @@ inline int string_to_int(std::string &input){
     std::stringstream tmp_ss;
     tmp_ss << input;
     tmp_ss >> result;
-    CNOTICE_LOG("return result is %d", result);
+    CDEBUG_LOG("return result is %d", result);
     return result;
 
 }
-
 int64_t MoviePluginImp::DoQuery(
         uint64_t handle,
         ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr >* result,
         ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::KgCardPtr >* kg_res)
 {
+
     KgCardPtr card = ::sofa::create< KgCard >();
     std::string* response = &(card->content());
     // faci::knowledge::GremlinServerConnect* gremlinConnect =
@@ -370,7 +367,6 @@ int64_t MoviePluginImp::DoQuery(
                 //1.返回多实体结果 只处理配置中的类型
                 //2.返回多个可处理类型 只处理数据中包含查询属性的结果
                 //2.eg 故宫门票 处理含有price属性的景点类型 不处理电影类型
-                CNOTICE_LOG("find process_type:%s ,k:%d", result_type.c_str(), k);
                 CDEBUG_LOG("find process_type:%s ,k:%d", result_type.c_str(), k);
                 //特殊冲突处理逻辑在此
                 //1.豆瓣影视 多实体 以 上映日期排序 取最新的一个
@@ -383,20 +379,20 @@ int64_t MoviePluginImp::DoQuery(
                         int cur_hot=0;
                         if(element[k].isMember("viewCount") && element[k]["viewCount"].isArray())//有热度信息
                         {
-                std::string hot_string=element[k]["viewCount"][(size_t)0].asString();
-                cur_hot=atoi(hot_string.c_str());
+			    std::string hot_string=element[k]["viewCount"][(size_t)0].asString();
+			    cur_hot=atoi(hot_string.c_str());
                         }
                         else //无热度信息,默认热度是1
                         {
                             cur_hot=1;
                         }
-            CNOTICE_LOG("k: %d cur hot:%d",k, cur_hot);
+			CDEBUG_LOG("k: %d cur hot:%d",k, cur_hot);
                         //排序
                         if(cur_hot >= scene_hot)
                         {
                             scene_hot=cur_hot;
                             process_loc=k;
-                CNOTICE_LOG("final process_type:%s k:%d hot:%d", result_type.c_str(), k, cur_hot);
+			    CDEBUG_LOG("final process_type:%s k:%d hot:%d", result_type.c_str(), k, cur_hot);
                         }
                     }
                     //如果查询属性属于影视类 则需要判断逻辑 取最新的电影
@@ -419,8 +415,8 @@ int64_t MoviePluginImp::DoQuery(
                                 process_loc = k;
                                 year = year_temp;
                                 month = month_temp;
-                                CNOTICE_LOG("final process_type:%s k:%d", result_type.c_str(), k);
-                                CNOTICE_LOG("find date %s is later,query %s,location:%d",
+                                CDEBUG_LOG("final process_type:%s k:%d", result_type.c_str(), k);
+                                CDEBUG_LOG("find date %s is later,query %s,location:%d",
                                         local_date.c_str(), fifadata_handle->src_query.c_str(), k);
                             }
                         }
@@ -428,7 +424,7 @@ int64_t MoviePluginImp::DoQuery(
                     else{
                         //非电影类 同一类别出多个结果 随机出1个
                         process_loc = k;
-                        CNOTICE_LOG("final process_type:%s k:%d", result_type.c_str(), k);
+                        CDEBUG_LOG("final process_type:%s k:%d", result_type.c_str(), k);
                         break;
                     }
                 } else if (search_property=="" &&
@@ -437,7 +433,7 @@ int64_t MoviePluginImp::DoQuery(
                     std::string spo_query_src = fifadata_handle->spo_query;
                     int spo_query_len = spo_query_src.size();
                     if (spo_query_src.substr(spo_query_len - 10, 10) != ".with(\'*\')") {
-                        CWARNING_LOG("spo_query : \"%s\" is not end with \".with(\'*\')\".",
+                        CDEBUG_LOG("spo_query : \"%s\" is not end with \".with(\'*\')\".",
                                 fifadata_handle->spo_query.c_str());
                         return -1;
                     }
@@ -446,14 +442,14 @@ int64_t MoviePluginImp::DoQuery(
                         if (spo_query_src.substr(j, 4) == ".out") {
                             //得到边的英文：.out("edgename").with('*')
                             search_edge = spo_query_src.substr(j + 6, spo_query_len - 10 - j - 8);
-                            CNOTICE_LOG("find edge %s", search_edge.c_str());
+                            CDEBUG_LOG("find edge %s", search_edge.c_str());
                             break;
                         }
                     }
-                    CNOTICE_LOG("info %s,%d,%d", spo_query_src.c_str(),
+                    CDEBUG_LOG("info %s,%d,%d", spo_query_src.c_str(),
                             spo_query_src.length(), spo_query_src.find("out"));
                     int local_start = spo_query_src.find("has(\'name\',MATCH");
-                    CNOTICE_LOG("local_start %d", local_start);
+                    CDEBUG_LOG("local_start %d", local_start);
                     std::string midd_gremlin;
                     //midd_gremlin = ('name',MATCH,'中国')
                     //local_start + 3 means length(has)
@@ -463,28 +459,28 @@ int64_t MoviePluginImp::DoQuery(
                     }
                     //std::string midd_gremlin = spo_query_src.substr(spo_query_src.find_last_of("has")+3,
                     //        spo_query_src.find("out")-30);
-                    CNOTICE_LOG("middle_gremlin %s", midd_gremlin.c_str());
+                    CDEBUG_LOG("middle_gremlin %s", midd_gremlin.c_str());
                     if (midd_gremlin.substr(0, 14) == "(\'name\',MATCH,"){
                         title_name = midd_gremlin.substr(15, midd_gremlin.length()-17);
-                        CNOTICE_LOG("match_here");
+                        CDEBUG_LOG("match_here");
                         process_loc = k;
                     }else{
-                        CWARNING_LOG("name_da gremlin error");
+                        CDEBUG_LOG("name_da gremlin error");
                         return -1;
                     }
                 } else{
-                    CNOTICE_LOG("location %d dont have prop %s", k, search_property.c_str());
+                    CDEBUG_LOG("location %d dont have prop %s", k, search_property.c_str());
                 }
             }else{
-                CNOTICE_LOG("return data type %s\t,but dont process", result_type.c_str());
+                CDEBUG_LOG("return data type %s\t,but dont process", result_type.c_str());
             }
         }
     }
     if (process_loc == -1){
-        CNOTICE_LOG("query %s dont process", fifadata_handle->src_query.c_str());
+        CDEBUG_LOG("query %s dont process", fifadata_handle->src_query.c_str());
         return -1;
     }
-    CNOTICE_LOG("final process_location:%d", process_loc);
+    CDEBUG_LOG("final process_location:%d", process_loc);
     //此处已经决定最优实体为process_loc 不需要for循环
 //    for(size_t k = process_loc; k < element.size(); ++k){
         size_t k = process_loc;
@@ -492,12 +488,12 @@ int64_t MoviePluginImp::DoQuery(
         faci::graphsearch::Json& s_entity = element[k];
         if (s_entity.isMember("type") && s_entity["type"].isArray() && s_entity["type"].size()>0 && s_entity["type"][(size_t)0].isString()){
             result_type = s_entity["type"][(size_t)0].asString();
-            CNOTICE_LOG("final process_type is %s", result_type.c_str());
+            CDEBUG_LOG("final process_type is %s", result_type.c_str());
         }
         if (s_entity.isMember("name") && s_entity["name"].isArray() && s_entity["name"].size()>0 && s_entity["name"][(size_t)0].isString()){
             name = s_entity["name"][(size_t)0].asString();
         } else{
-            CFATAL_LOG("result do not include name");
+            CDEBUG_LOG("result do not include name");
             return -4;
         }
         faci::graphsearch::Json::Members mems = s_entity.getMemberNames();
@@ -519,7 +515,7 @@ int64_t MoviePluginImp::DoQuery(
                     {
                         new_value = s_entity[*iter][(size_t)0].asString();
                         s_entity["url"]=new_value;
-            jump_url=new_value;
+			jump_url=new_value;
                         CDEBUG_LOG("url replace by guide:%s\t", new_value.c_str());
                     }
                 }
@@ -529,7 +525,7 @@ int64_t MoviePluginImp::DoQuery(
                     {
                         new_value = s_entity[*iter][(size_t)0].asString();
                         s_entity["url"]=new_value;
-            jump_url=new_value;
+			jump_url=new_value;
                         CDEBUG_LOG("url replace by wiseGuide:%s\t", new_value.c_str());
                     }
                 }
@@ -543,14 +539,14 @@ int64_t MoviePluginImp::DoQuery(
                 //检测查询属性 如果属性的值为空，不展现
                 if ((*iter) == search_property && s_entity[*iter].size()>0  && s_entity[*iter][(size_t)0].isString()){
                     if (s_entity[*iter][(size_t)0].asString() == ""){
-                        CWARNING_LOG("entity has property but value is null,name type searchp is %s\t%s\t", name.c_str(), result_type.c_str(), search_property.c_str());
+                        CDEBUG_LOG("entity has property but value is null,name type searchp is %s\t%s\t", name.c_str(), result_type.c_str(), search_property.c_str());
                         return -3;
                     }
                 }
                 //保存下 实体属性 searchp_chn字段需要
                 if ((*iter)=="name" && s_entity[*iter].size()>0 && s_entity[*iter][(size_t)0].isString()){
                     name = s_entity[*iter][(size_t)0].asString();
-                    CNOTICE_LOG("entity name is :%s\t", name.c_str());
+                    CDEBUG_LOG("entity name is :%s\t", name.c_str());
                 }
                 //把数组换成string
                 for (size_t pos = 0; pos != s_entity[*iter].size()-1; ++pos) {
@@ -559,49 +555,53 @@ int64_t MoviePluginImp::DoQuery(
                     }
                 }
                 //同上
-                if (s_entity[*iter].size() >=1 && s_entity[*iter][s_entity[*iter].size()-1].isString()) {
-                    new_value += s_entity[*iter][s_entity[*iter].size()-1].asString();
-                    CDEBUG_LOG("final_new_value is :%s\t", new_value.c_str());
-                }
+			    if (s_entity[*iter].size() >=1 && s_entity[*iter][s_entity[*iter].size()-1].isString()) {
+				    new_value += s_entity[*iter][s_entity[*iter].size()-1].asString();
+				    CDEBUG_LOG("final_new_value is :%s\t", new_value.c_str());
+			    }
                 //上市日期逻辑：如果多日期，添加地域属性；如果只有中国大陆，不显示地域
-                if (*iter == "regionalReleaseDate"){
-                    std::vector<std::string> split_result;
-                    int len = split_words(new_value, ",", &split_result);
-                    len = split_result.size();
+			    if (*iter == "regionalReleaseDate"){
+				    std::vector<std::string> split_result;
+				    int len = split_words(new_value, ",", &split_result);
+				    len = split_result.size();
                     std::string str = "中国大陆" ;
-                    CDEBUG_LOG("regionalReleaseDate  is :%s\t",new_value.c_str());
+				    CDEBUG_LOG("regionalReleaseDate  is :%s\t",new_value.c_str());
                     //数据内容变化 不需要此处拼接逻辑
                     /*for (int i =0; i<len; i++){
-                        if (split_result[i].find(str)!=std::string::npos){
-                            new_value = split_result[i].substr(0 , (split_result[i].size()-str.size()-2));
-                            tag = 1;
-                            break ;
-                        }
-                    }
-                    if (tag == 0){
-                        new_value = split_result[0];
-                        CDEBUG_LOG("after_process regionalReleaseDate  is :%s\t",new_value.c_str());
+					    if (split_result[i].find(str)!=std::string::npos){
+						    new_value = split_result[i].substr(0 , (split_result[i].size()-str.size()-2));
+						    tag = 1;
+						    break ;
+					    }
+				    }
+				    if (tag == 0){
+					    new_value = split_result[0];
+					    CDEBUG_LOG("after_process regionalReleaseDate  is :%s\t",new_value.c_str());
                         }*/
-                }
+			    }
 
                 //剧情简介逻辑：添加剧情简介 显示
                 if (*iter == "description" && result_type == "Movie"){
                     new_value = "剧情简介:" + new_value ;
-                    CDEBUG_LOG("after_process description  is :%s\t",new_value.c_str());
-                }
+				    CDEBUG_LOG("after_process description  is :%s\t",new_value.c_str());
+			    }
                 //fromUrl 多个@FROM_URL 取第一个
-                if (*iter == "@FROM_URL"){
-                    std::vector<std::string> split_result;
-                    split_words(new_value, ",", &split_result);
-                    new_value = split_result[0] ;
-                    CDEBUG_LOG("fromurl is :%s\t",new_value.c_str());
+			    if (*iter == "@FROM_URL"){
+				    std::vector<std::string> split_result;
+				    split_words(new_value, ",", &split_result);
+				    new_value = split_result[0] ;
+				    CDEBUG_LOG("fromurl is :%s\t",new_value.c_str());
+			    }
+                if (*iter == "structured_info" && s_entity[*iter].size() >=1){
+                    s_entity[*iter] = s_entity[*iter][s_entity[*iter].size()-1];
+                }else {
+                    s_entity[*iter] = new_value;
                 }
-                s_entity[*iter] = new_value;
             }
-        }
-        s_entity.toString(tmp_result);
-        CDEBUG_LOG("search result_after\t%s", tmp_result.c_str());
-        if (s_entity.isMember("_id") && (s_entity["_id"].isUInt())){
+		}
+	    s_entity.toString(tmp_result);
+	    CDEBUG_LOG("search result_after\t%s", tmp_result.c_str());
+	    if (s_entity.isMember("_id") && (s_entity["_id"].isUInt())){
             entity->set_entity_id(s_entity["_id"].asUInt64());
         }
         entity->set_entity(s_entity.toSofaObject().get());
@@ -623,7 +623,7 @@ int64_t MoviePluginImp::DoQuery(
     //判断当前类型result_type是否为该处理的类型
     std::vector<std::string>::iterator s =find(typelist_vector.begin(),typelist_vector.end(),result_type);
     if (s!= typelist_vector.end()){
-        CNOTICE_LOG("find process_type:%s\t",result_type.c_str());
+        CDEBUG_LOG("find process_type:%s\t",result_type.c_str());
         std::map<std::string,std::string>&mapping = map_all[result_type];
         std::map<int,std::string>&mapping_conf = mapconf_all[result_type];
         std::map<std::string,std::string>&mappingedge = mapedge_all[result_type];
@@ -678,18 +678,18 @@ int64_t MoviePluginImp::DoQuery(
     snprintf(srcid_tmp, 9, "%d", fifadata_handle->srcid);
     srcid_str = srcid_tmp;
     if(display_config.sid != srcid_str) {
-        CWARNING_LOG("srcid not match %d %s", fifadata_handle->srcid, fifadata_handle->src_query.c_str());
+        CDEBUG_LOG("srcid not match %d %s", fifadata_handle->srcid, fifadata_handle->src_query.c_str());
         return -1;
     }
     display_config.src_query = fifadata_handle->src_query;
     display_config.search_prop = fifadata_handle->search_prop;
-    CNOTICE_LOG("ytx searchp search_prop \t%s\t%s", display_config.searchp.c_str(),display_config.search_prop.c_str());
+	CDEBUG_LOG("ytx searchp search_prop \t%s\t%s", display_config.searchp.c_str(),display_config.search_prop.c_str());
     CDEBUG_LOG("fifadata_handle->client_name : %s", fifadata_handle->client_name.c_str());
     int ret = display_handle.outputProcess(display_config,
             *result,
             response,
             fifadata_handle->client_name);
-    CDEBUG_LOG("display__ytx\t%s", (*response).c_str());
+	CDEBUG_LOG("display__ytx\t%s", (*response).c_str());
     if (ret != 0){
         CDEBUG_LOG("display return error,return number %d",ret);
         return -4;
@@ -719,7 +719,7 @@ int64_t MoviePluginImp::DoQuery(
     {
         fifadata_handle->client_name = fifadata_handle->client_name_real;
     }   
-    if (fifadata_handle->client_name == "dumi" || fifadata_handle->client_name == "du_aries")
+    if (fifadata_handle->client_name == "du_us" || fifadata_handle->client_name == "du_aries")
     {
         std::string new_response;
         if (0!=trans_dumi(fifadata_handle, *response, new_response))
@@ -734,6 +734,7 @@ int64_t MoviePluginImp::DoQuery(
 
     kg_res->push_back(card);
     return 0;
+
 }
 //判断当天是否属于周几到周几的星期范围
 bool MoviePluginImp::is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) {
@@ -817,7 +818,7 @@ std::string MoviePluginImp::compute_today_openinghours(const struct tm *ptm,::fa
     if (result.isNull() || !result.isArray())
     {
         CDEBUG_LOG("result is null or is not array");
-        return NULL;
+        return "";
     }
     std::string opentime="";
     std::string closetime="";
@@ -950,7 +951,7 @@ std::string MoviePluginImp::compute_today_price(const struct tm *ptm, ::faci::gr
     if (result.isNull() || !result.isArray())
     {
         CDEBUG_LOG("result is null or is not array");
-        return NULL;
+        return "";
     }
     for (size_t i=0; i<result.size(); i++)
     {
@@ -1022,7 +1023,6 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
         scene_json.removeMember("structured_info");
     }
 }
-
 void MoviePluginImp::async_DoQuery(
         ::sofa::AsyncControllerPtr __cntl,int64_t* __ret,uint64_t handle,
         ::sofa::vector< ::com::baidu::wd::knowledge::ver_1_0_0::EntityBodyPtr >* result,
@@ -1045,17 +1045,16 @@ int64_t MoviePluginImp::QueryDone(
     return 0;
 }
 
-int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* params, const std::string& input, std::string& output)
+int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* query_param, const std::string& input, std::string& output)
 {
-    /* {error: 0(-1), "origin_query": "xxxxx", "norm_query": "xxxxx", "result_list": [{"title": "", "abstract": "", "url": "", "img": ""}, {"title": "", “ abstract": "", "url": "", "img": ""}], score: 120} */
+
     ::faci::graphsearch::Json input_json;
     ::faci::graphsearch::Json output_json;
-    ::faci::graphsearch::Json result_list;
+    ::faci::graphsearch::Json result_mid;//mid用于收集答案
     CDEBUG_LOG("trans_dumi input: %s", input.c_str());
-    CDEBUG_LOG("trans_dumi src_query: %s", params->src_query.c_str());
     input_json.fromString(input);
 
-    //目前只需要处理exactqa和ks_general两种模板即可
+    //对应所有结果取出答案集合到result_mid,目前只需要处理exactqa和ks_general两种模板即可
     if ( input_json.isMember("resultData") && input_json["resultData"].isMember("tplData") && input_json["resultData"]["tplData"].isMember("result") ) //是exactqa
     {
         ::faci::graphsearch::Json result = input_json["resultData"]["tplData"]["result"];
@@ -1066,7 +1065,7 @@ int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* params, const std::str
         }
         //确定主答案区域
         std::vector<std::string> ans;
-        if (input_json["resultData"]["tplData"].isMember("search_property"))
+        if (input_json["resultData"]["tplData"].isMember("search_property") && input_json["resultData"]["tplData"]["search_property"].asString().size()!=0)
         {
             //可能有多属性按|切割
             std::string tmp = input_json["resultData"]["tplData"]["search_property"].asString();
@@ -1076,65 +1075,75 @@ int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* params, const std::str
         {
             ans.push_back("ename");
         }
+
         //确定title
         std::string title;
-        if (input_json["resultData"]["tplData"].isMember("search_property"))
+        if (input_json["resultData"]["tplData"].isMember("display_title") && input_json["resultData"]["tplData"]["display_title"].asString().size()!=0)
         {
             title = input_json["resultData"]["tplData"]["display_title"].asString();
         }
         else
         {
-            title = params->src_query;
+            title = query_param->src_query;
         }
+        result_mid["title"] = title;
 
+        //外层url
+        result_mid["url"] = "http://www.baidu.com/s?wd=" + query_param->src_query;
         
-
-        //多答案压缩到一个卡片
-        //title
-        result_list[(size_t)0]["title"] = title;
-        //多答案url直接发起搜索,无img
-        if (result.size()>1)
-        {
-            result_list[(size_t)0]["url"] = "http://www.baidu.com/s?wd=" + params->src_query;
-        }
-        else //单答案还是照样填url,img
-        {
-            ::faci::graphsearch::Json tmp = result[(size_t)0];
-            //填写图片,优先选大的
-            if (tmp.isMember("pic_6n_121") && tmp["pic_6n_121"].asString().size()!=0)
-            {
-                result_list[(size_t)0]["img"] = tmp["pic_6n_121"].asString();
-            }
-            if (tmp.isMember("pic_4n_78") && tmp["pic_4n_78"].asString().size()!=0)
-            {
-                result_list[(size_t)0]["img"] = tmp["pic_4n_78"].asString();
-            }
-            //填写落地页
-            if (tmp.isMember("sourcelink") && tmp["sourcelink"].asString().size()!=0 )
-            {
-                result_list[(size_t)0]["url"] = tmp["sourcelink"].asString();
-            }
-        }
-        //文本答案压缩
+        //取答案
         for( size_t i=0; i<result.size(); i++ )
         {
             ::faci::graphsearch::Json tmp = result[i];
             std::string merged_ans;
-            //填写文本区abstract,多结果的拼一起
-            for (size_t i=0; i<ans.size(); i++)
+            //文本区abstract,多结果的拼一起
+            for (size_t j=0; j<ans.size(); j++)
             {
-                if (tmp.isMember(ans[i]) && tmp[ans[i]].asString().size()!=0 )
+                if (tmp.isMember(ans[j]) && tmp[ans[j]].asString().size()!=0 )
                 {
-                    merged_ans += tmp[ans[i]].asString()+"\n";
+                    merged_ans += tmp[ans[j]].asString()+" ";
                 }
                 else
                 {
                     //没文本答案算错误
-                    CDEBUG_LOG("result has not main-answer-field:%s", ans[i].c_str());
+                    CDEBUG_LOG("result has not main-answer-field:%s", ans[j].c_str());
                     return -1;
                 }
             }
-            result_list[(size_t)0]["abstract"] = merged_ans;
+            result_mid["ret_detail"][i]["context"] = merged_ans;
+            //内层url
+            if (tmp.isMember("sourcelink") && tmp["sourcelink"].asString().size()!=0 )
+            {
+                result_mid["ret_detail"][i]["url"] = tmp["sourcelink"].asString();
+            }
+            else
+            {
+                 result_mid["ret_detail"][i]["url"] = "http://www.baidu.com/s?wd=" + tmp["ename"].asString();
+            }
+            //填写图片,优先选大的,没图留空
+            if (tmp.isMember("pic_6n_121") && tmp["pic_6n_121"].asString().size()!=0)
+            {
+                result_mid["ret_detail"][i]["img"] = tmp["pic_6n_121"].asString();
+            }
+            if (tmp.isMember("pic_4n_78") && tmp["pic_4n_78"].asString().size()!=0)
+            {
+                result_mid["ret_detail"][i]["img"] = tmp["pic_4n_78"].asString();
+            }
+            //摘要
+            if (tmp.isMember("summary") && tmp["summary"].asString().size()!=0 )
+            {
+                result_mid["ret_detail"][i]["summary"] = tmp["summary"].asString();
+            }
+            else
+            {
+                result_mid["ret_detail"][i]["summary"] = "更多详细结果请点击";
+            }
+            //additional,可选
+            if (tmp.isMember("additional") && tmp["additional"].asString().size()!=0 )
+            {
+                result_mid["ret_detail"][i]["additional"] = tmp["additional"].asString();
+            }
+
         }
     }
     else if ( input_json.isMember("answer") ) //是ks_general
@@ -1147,46 +1156,57 @@ int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* params, const std::str
         }
         else
         {
-            title = params->src_query;
+            title = query_param->src_query;
         }
+        result_mid["title"] = title;
+        //外层url公用
+        result_mid["url"] = "http://www.baidu.com/s?wd=" + query_param->src_query;
+
         //主答案
         if ( input_json.isMember("answer") && input_json["answer"].isArray() )
         {
-            
-
-            //多答案压缩到一个卡片
-            //title
-            result_list[(size_t)0]["title"] = title;
-            //url
-            if (input_json.isMember("url") && input_json["url"].asString().size()!=0)
-            {
-                result_list[(size_t)0]["url"] = input_json["url"].asString();
-            }
-            else
-            {
-                result_list[(size_t)0]["url"] = "http://www.baidu.com/s?wd=" + params->src_query;
-            }
-            //img
-            if (input_json["answer"].size()==1)
-            {
-                ::faci::graphsearch::Json tmp = input_json["answer"][(size_t)0];
-                if (tmp.isMember("img") && tmp["img"].asString().size()!=0 )
-                {
-                    result_list[(size_t)0]["img"] = tmp["img"].asString();
-                }
-            }
-            //文本答案压缩
-            std::string merged_abstract;
             for (size_t i=0; i<input_json["answer"].size(); i++)
             {
                 ::faci::graphsearch::Json tmp = input_json["answer"][i];
                 if (tmp.isMember("ename") && tmp["ename"].asString().size()!=0 )
                 {
-                    merged_abstract += tmp["ename"].asString() + "\n";
+                    result_mid["ret_detail"][i]["context"] = tmp["ename"].asString();
+                }
+                else
+                {
+                    //没文本算错误
+                    CDEBUG_LOG("no ename!");
+                    return -1;
+                }
+                //图片,没有则留空
+                if (tmp.isMember("img") && tmp["img"].asString().size()!=0 )
+                {
+                    result_mid["ret_detail"][i]["img"] = tmp["img"].asString();
+                }
+                //additonal 可选
+                if (tmp.isMember("additional") && tmp["additional"].asString().size()!=0 )
+                {
+                    result_mid["ret_detail"][i]["additional"] = tmp["additional"].asString();
+                }
+                //只有单结果有内层url,否则统一跳大搜
+                if (i==0 && input_json.isMember("gist") && input_json["gist"].isMember("link") && input_json["gist"]["link"].asString().size()!=0)
+                {
+                    result_mid["ret_detail"][i]["url"] = input_json["gist"]["link"].asString();
+                }
+                else
+                {
+                    result_mid["ret_detail"][i]["url"] = "http://www.baidu.com/s?wd=" + tmp["ename"].asString();
+                }
+                //只有单结果有摘要,否则统一跳大搜
+                if (i==0 && input_json.isMember("gist") && input_json["gist"].isMember("content") && input_json["gist"]["content"].asString().size()!=0)
+                {
+                    result_mid["ret_detail"][i]["summary"] = input_json["gist"]["content"].asString();
+                }
+                else
+                {
+                    result_mid["ret_detail"][i]["summary"] = "更多详细结果请点击";
                 }
             }
-             result_list[(size_t)0]["abstract"] = merged_abstract;
-
         }
         else
         {
@@ -1199,13 +1219,87 @@ int MoviePluginImp::trans_dumi(const SPOThreadFifaData_t* params, const std::str
         CDEBUG_LOG("unkown kv template");
         return -1;
     }
-    //填写output模板固定的部分
-    output_json["origin_query"] = params->src_query;
-    output_json["norm_query"] = params->norm_query; //后面要改成request里一致的
-    output_json["score"] = 100;
-    output_json["error"] = 0; 
-    output_json["result_list"] = result_list;
 
+    //====================================================把result_mid转换成真正的dumi模板==================================================================
+    ::faci::graphsearch::Json result_list; //实体卡片数组
+    ::faci::graphsearch::Json raw_answer; //置信度信息数组
+    if (!result_mid.isMember("ret_detail"))
+    {
+        CDEBUG_LOG("no ret_detail array");
+        return -1;
+    }
+    //单实体结果,用txt或txt_comm模板
+    if (result_mid["ret_detail"].isArray() && result_mid["ret_detail"].size()==1)
+    {
+        ::faci::graphsearch::Json card;
+        ::faci::graphsearch::Json ret = result_mid["ret_detail"][(size_t)0];
+        //没图的直接用纯文本txt模板,有图的用txt_comm
+        if (ret.isMember("img") && ret["img"].asString().size()>0)
+        {
+            card["result_type"] = "txt_comm";
+            card["result_content"]["title"] = ret["context"].asString();
+            card["result_content"]["answer"] = ret["summary"].asString();
+            card["result_content"]["link"] = ret["url"].asString();
+            card["result_content"]["img"] = ret["img"].asString();
+            card["voice"] = "";
+            card["card_id"] = "";
+        }
+        else
+        {
+            card["result_type"] = "txt";
+            card["result_content"]["answer"] = ret["context"].asString();
+            card["voice"] = "";
+            card["card_id"] = "";
+        }
+        //置信度相关
+        raw_answer[(size_t)0]["title"] = query_param->src_query;
+        raw_answer[(size_t)0]["subtitle"] = result_mid["title"].asString();
+        raw_answer[(size_t)0]["url"] = ret["url"].asString();
+        raw_answer[(size_t)0]["answer"]= ret["context"].asString() + "\n" +ret["summary"].asString();
+        //push card
+        result_list[(size_t)0] = card;
+    }
+    //多实体结果,用multi_normal模板
+    else if (result_mid["ret_detail"].isArray() && result_mid["ret_detail"].size()>1)
+    {
+        ::faci::graphsearch::Json card;
+        card["result_type"] = "multi_normal";
+        card["card_id"] = "";
+        card["result_content"]["answer"] = result_mid["title"].asString();
+        card["result_content"]["more_label"] = "查看更多";
+        card["result_content"]["more_url"] = result_mid["url"].asString();
+        for (size_t i=0; i<result_mid["ret_detail"].size(); i++)
+        {
+            ::faci::graphsearch::Json ret = result_mid["ret_detail"][i];
+            if (!(ret.isMember("img") && ret["img"].asString().size()>0))
+            {
+                //没图的扔了
+                continue;
+            }
+            card["result_content"]["objects"][i]["name"] = ret["context"].asString();
+            card["result_content"]["objects"][i]["url"] = ret["url"].asString();
+            card["result_content"]["objects"][i]["img_url"] = ret["img"].asString();
+            //desc用来放addtional信息,没有的话填充空格
+            if (ret.isMember("additional") && ret["additional"].asString().size()>0)
+            {
+                card["result_content"]["objects"][i]["desc"] = ret["additional"].asString();
+            }
+            else
+            {
+                card["result_content"]["objects"][i]["desc"] = " ";
+            }
+            //置信度相关
+            raw_answer[i]["title"] = query_param->src_query;
+            raw_answer[i]["subtitle"] = result_mid["title"].asString();
+            raw_answer[i]["url"] = ret["url"].asString();
+            raw_answer[i]["answer"] = ret["context"].asString() + " " + card["result_content"]["objects"][i]["desc"].asString();
+        }
+        //push card
+        result_list[(size_t)0] = card;
+    }
+
+    output_json["result_list"] = result_list;
+    output_json["raw_answer"] = raw_answer;
     output_json.toString(output);
 
     return 0;

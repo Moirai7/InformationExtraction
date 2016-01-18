@@ -94,7 +94,6 @@ public:
             ::sofa::AsyncControllerPtr __cntl,
             int64_t* __ret,
             uint64_t handle);
-
     bool is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) ;
     bool is_date_in_season(const std::string& date,const std::string& infos) ;
     bool is_date_in_period(const std::string& date,const std::string& date1,const std::string& date2);

@@ -620,3 +620,4 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase7)
     kg_plugin->QueryDone(handle);
  }
 
+
