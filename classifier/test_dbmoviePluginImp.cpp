@@ -10,6 +10,17 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <sofa.h>
+#include <sofa/dev/dev.h>
+#include <sofa/kernel/config.h>
+#include <sofa/kernel/sync_async_conv.h>
+#include <sofa/kernel/not_implement_exception.h>
+#include "sofa/kernel/box.h"
+#include "sofa/text/json.h"
+#include <boost/thread.hpp>
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
+#include <sofa/kernel/implements.h>
+#include <sofa/kernel/runtime.h>
 #include <GremlinServerConnect.h>
 #include <com/baidu/wd/knowledge/ver_1_0_0.h>
 #include <com/baidu/wd/knowledge/da/ver_1_0_0.h>
@@ -18,7 +29,7 @@
 #include "json/json.h"
 #include "JsonObj.h"
 #include "QueryObject.h"
-
+#include "test_MoviePluginImp.h"
 using namespace ::com::baidu::wd::knowledge::ver_1_0_0;
 using namespace ::com::baidu::wd::knowledge::da::ver_1_0_0;
 using namespace ::faci::knowledge;
@@ -619,5 +630,184 @@ TEST_F(test_KgPluginPersonImp_Structured_suite, testCase7)
     controller->set_timeout(500);
     kg_plugin->QueryDone(handle);
  }
+std::string DoQuery(::sofa::ObjectPtr __ret)
+{
+    faci::graphsearch::Json element(__ret);
+    std::string tmp_result;
+    std::string name;
+    std::string jump_url = "lvyou.baidu.com";
+    std::string result_type = "Scene";
+    element.toString(tmp_result);
+    std::string search_edge = "";
+    std::string title_name = "";
+    if(element.isNull()){
+        return "";
+    }
 
+        faci::graphsearch::Json& s_entity = element[(size_t)0];
+        if (s_entity.isMember("type") && s_entity["type"].isArray() && s_entity["type"].size()>0 && s_entity["type"][(size_t)0].isString()){
+            result_type = s_entity["type"][(size_t)0].asString();
+            CDEBUG_LOG("final process_type is %s", result_type.c_str());
+        }
+        if (s_entity.isMember("name") && s_entity["name"].isArray() && s_entity["name"].size()>0 && s_entity["name"][(size_t)0].isString()){
+            name = s_entity["name"][(size_t)0].asString();
+        } else{
+            CDEBUG_LOG("result do not include name");
+            return "";
+        }
+        faci::graphsearch::Json::Members mems = s_entity.getMemberNames();
+        for (faci::graphsearch::Json::Members::iterator iter = mems.begin(); iter != mems.end(); ++iter) {
+            if (s_entity[*iter].isArray()) {
+                std::string new_value;
+                //把数组换成string
+                for (size_t pos = 0; pos != s_entity[*iter].size()-1; ++pos) {
+                    if (s_entity[*iter][pos].isString()){
+                        new_value += s_entity[*iter][pos].asString()+",";
+                    }
+                }
+                //同上
+			    if (s_entity[*iter].size() >=1 && s_entity[*iter][s_entity[*iter].size()-1].isString()) {
+				    new_value += s_entity[*iter][s_entity[*iter].size()-1].asString();
+				    CDEBUG_LOG("final_new_value is :%s\t", new_value.c_str());
+			    }
+                if (*iter == "structured_info" && s_entity[*iter].size() >=1){
+                    s_entity[*iter] = s_entity[*iter][s_entity[*iter].size()-1];
+                }else {
+                    s_entity[*iter] = new_value;
+                }
+            }
+		}
+	    s_entity.toString(tmp_result);
+	    CDEBUG_LOG("search result_after\t%s", tmp_result.c_str());
+	return tmp_result;
 
+}
+ /**
+ * @brief: 调用旅游结构化接口，增加函数覆盖率
+ **/
+TEST_F(test_KgPluginPersonImp_Structured_suite, testCase8)
+{
+    //ifstream fin("output.txt");
+    faci::knowledge::ServiceApiServerConnect* gremlinConnect =
+    faci::knowledge::ServiceApiServerConnect::getConn();
+    ::faci::graphsearch::Json scene_json ;
+    test_MoviePluginImp mpi ;
+    std::string response_str;
+    struct tm *ptm = new struct tm;
+    for (int i=6; i<30; i++) {
+        string query = g_query_list[i];
+        string spo_query = "g.query().has('name',MATCH,'"+query+"').with('*')";
+        string resource_name = "spo_lvyou";
+        ::sofa::ObjectPtr __ret;
+        ::sofa::ObjectPtr extra_info;
+        gremlinConnect->gremlinQuery(spo_query, __ret, extra_info, resource_name);
+        std::string tmp_result = DoQuery(__ret);
+        //元旦
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 1-1;
+        ptm->tm_mday = 1;
+        ptm->tm_wday = 1;
+
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+        //春节
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 2-1;
+        ptm->tm_mday = 7;
+        ptm->tm_wday = 0;
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+        //清明
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 4-1;
+        ptm->tm_mday = 4;
+        ptm->tm_wday = 1;
+
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+        //51
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 5-1;
+        ptm->tm_mday = 1;
+        ptm->tm_wday = 0;
+
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+        //暑假
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 7-1;
+        ptm->tm_mday = 31;
+        ptm->tm_wday = 0;
+
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+        //春节
+        ptm->tm_hour = 12;
+        ptm->tm_min = 0;
+        ptm->tm_sec = 0;
+        ptm->tm_year = 2016-1900;
+        ptm->tm_mon = 9-1;
+        ptm->tm_mday = 15;
+        ptm->tm_wday = 4;
+
+        //旅游产品时间与票价计算
+        CDEBUG_LOG("compute_scene_pc start");
+        response_str = tmp_result;
+        scene_json.fromString(response_str);
+        if (!scene_json.isNull()) {
+            mpi.compute_scene_pc(ptm,scene_json);
+        } else {
+            CNOTICE_LOG("The json couldn't be parsed");
+        }
+    }
+}

@@ -738,9 +738,14 @@ int64_t MoviePluginImp::DoQuery(
 }
 //判断当天是否属于周几到周几的星期范围
 bool MoviePluginImp::is_date_in_week(const struct tm *ptm,const std::string& week1,const std::string& week2) {
-    std::stringstream ss;
-    ss<<ptm->tm_wday;
-    std::string week = ss.str();
+    std::string week;
+    if (ptm->tm_wday == 0) {
+        week = "7";
+    }else {
+        std::stringstream ss;
+        ss<<ptm->tm_wday;
+        week = ss.str();
+    }
     CDEBUG_LOG("today %s ; week1 %s ; week2 %s",week.c_str(),week1.c_str(),week2.c_str());
     return (week>=week1 && week<=week2);
 }
