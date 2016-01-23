@@ -15,6 +15,7 @@ class InterClassifier:
 		self.newwords2 =identify
 		import re
 		self.de = re.compile(u"[\u4e00-\u9fa5]")
+		#TODO 添加新关系时，需要加入新关系S和O的NER结果，如u'新关系':('PERSON','PERSON')
 		self.relation = {u'fuqin':('PERSON','PERSON'),u'erzi':('PERSON','PERSON'),u'nver':('PERSON','PERSON'),u'nvyou':('PERSON','PERSON'),u'nanyou':('PERSON','PERSON'),u'muqin':('PERSON','PERSON'),u'emma':('PERSON','PERSON'),u'zhangfu':('PERSON','PERSON'),u'qizi':('PERSON','PERSON'),u'\u5973\u53cb':('PERSON','PERSON'),u'\u5973\u513f':('PERSON','PERSON'),u'\u59bb\u5b50':('PERSON','PERSON'),u'\u4e08\u592b':('PERSON','PERSON'),u'\u524d\u592b':('PERSON','PERSON'),u'\u7236\u4eb2':('PERSON','PERSON'),u'\u8eab\u9ad8':('PERSON','HEIGHT'),u'\u751f\u65e5':('PERSON','DATE'),u'\u64ad\u51fa\u65f6\u95f4':('FILM','TIME'),u'\u4e3b\u9898\u66f2':('FILM','MUSIC')}
 		self.pos_tagger={'Dg':1,'Ng':2,'Tg':3,'Vg':4,'a':5,'ad':6,'an':7,'b':8,'c':9,'e':10,'f':11,'g':12,'h':13,'i':14,'j':15,'k':16,'l':17,'m':18,'n':19,'nr':20,'ns':21,'nt':22,'nx':23,'nz':24,'o':25,'p':26,'q':27,'r':28,'s':29,'t':30,'u':31,'v':32,'vd':33,'Ag':34,'vn':35,'w':36,'y':37,'z':38,'d':39,'Rg':40,'Mg':41,'Bg':42}
 		self.stop=stop

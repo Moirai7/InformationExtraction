@@ -31,25 +31,24 @@ class Classifier:
 	def setIden(self,identify):
 		self.identify=identify
 		if identify == 'muqin':
-			self.newwords2=[u"\u5988\u5988",u"\u6bcd\u4eb2"]#muqin
+			self.newwords2=[u"妈妈",u"母亲"]#muqin
 		elif identify == 'fuqin':
-			self.newwords2=[u"\u7238\u7238",u"\u7236\u4eb2"]#fuqin
+			self.newwords2=[u"爸爸",u"父亲"]#fuqin
 		elif identify == 'erzi':
-			self.newwords2=[u"\u513f\u5b50"]#erzi
+			self.newwords2=[u"儿子"]#erzi
 		elif identify == 'nver':
-			self.newwords2=[u"\u5973\u513f"]#nver
+			self.newwords2=[u"女儿"]#nver
 		elif identify == 'nvyou':
-			self.newwords2=[u"\u5973\u670b\u53cb",u"\u5973\u53cb"]#nvyou
+			self.newwords2=[u"女友",u"女朋友"]#nvyou
 		elif identify == 'nanyou':
-			self.newwords2=[u"\u7537\u670b\u53cb",u"\u7537\u53cb"]#nanyou
+			self.newwords2=[u"男友",u"男朋友"]#nanyou
 		elif identify == 'zhangfu':
-			self.newwords2=[u"\u8001\u516c",u"\u4e08\u592b",u"\u592b\u5987"]#zhangfu
+			self.newwords2=[u"丈夫",u"老公",u"夫妇"]#zhangfu
 		elif identify == 'qizi':
-			self.newwords2=[u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]#qizi
+			self.newwords2=[u"妻子",u"老婆",u"夫人",u"夫妇"]#qizi
 		print self.newwords2[0].encode('utf-8')
 		import cPickle as pickle
 		from sklearn.externals import joblib
-		#TODO
 		strs = 'classifier/train_data/'+self.identify+'_'+self.type+'_norm.txt'
 		#strs = 'classifier/train_data/muqin_VotingClassifier_norm.txt'
 		print strs
@@ -540,16 +539,15 @@ class Classifier:
 		top=3
 		for v in dict:
 			times=(v[1]*100-int(v[1]*100))*1000
-			try:
-			    if (top>0 and int(times)>1) or (v[1]/times>0.16 and int(times)>5):
+			if int(times) == 0 :
+				continue
+			if (top>0 and int(times)>1) or (v[1]/times>0.16 and int(times)>5):
 				if v[1] != max :
 					top-=1
 					max = top
 				strs = s+'\t'+p+'\t'+v[0]+'\t'+str(v[1])+'\t'+str(int(times))
-			    else:
+			else:
 				continue
-			except:
-				pass
 			lll=''
 			for line in fromline:
 				if line.find(v[0]) != -1:
@@ -557,6 +555,7 @@ class Classifier:
 					lll += '\t'+line
 			strs+=lll
 			list.append(strs)
+			#list.append(lll)
 		return list
 
 

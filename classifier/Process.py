@@ -15,14 +15,15 @@ class Process:
 	def __init__(self,test=False):
 		#self.t = TextSim()
 		self.rels = {}
-		self.rels["erzi"] = [u"\u513f\u5b50"]    
-		self.rels["nver"] = [u"\u5973\u513f"]
-		self.rels["nanyou"] = [u"\u7537\u670b\u53cb",u"\u7537\u53cb"]
-		self.rels["nvyou"] = [u"\u5973\u670b\u53cb",u"\u5973\u53cb"]
-		self.rels["muqin"] = [u"\u5988\u5988",u"\u6bcd\u4eb2"]
-		self.rels["fuqin"] = [u"\u7238\u7238",u"\u7236\u4eb2"]
-		self.rels["qizi"] = [u"\u8001\u5a46",u"\u592b\u4eba",u"\u59bb\u5b50",u"\u592b\u5987"]
-		self.rels["zhangfu"] = [u"\u8001\u516c",u"\u4e08\u592b",u"\u592b\u5987"]
+		self.rels["erzi"] = [u"儿子"]    
+		self.rels["nver"] = [u"女儿"]
+		self.rels["nanyou"] = [u"男友",u"男朋友"]
+		self.rels["nvyou"] = [u"女友",u"女朋友"]
+		self.rels["muqin"] = [u"妈妈",u"母亲"]
+		self.rels["fuqin"] = [u"爸爸",u"父亲"]
+		self.rels["qizi"] = [u"妻子",u"老婆",u"夫人",u"夫妇"]
+		self.rels["zhangfu"] = [u"丈夫",u"老公",u"夫妇"]
+		#TODO 添加新关系时，需要加入新的关系引导词  self.rels["xinguanxi"]=[u"xinguanxi"] 
 		self.q = re.compile(r'\\')
 		self.p = re.compile('<[^>]+>') 
 		self.b = re.compile('(http|ftp|https)?(:\/\/)?([\w\-_]+\.)+([\w\-:_]+/)([\w\-\.,@^=%&amp;:/~\+#]+)?')
@@ -30,35 +31,6 @@ class Process:
 		if test is True:
 			self.c = Classifier.Classifier(type='GradientBoostingClassifier',vec='featurehash',genre='n_dict',identify='muqin')
 		pass
-
-	def _semi(self,lines):
-		strs=[]
-		for l in lines:
-			check=True
-			l = self.p.sub("", l)
-			l = self.b.sub("", l)
-			l = l.strip('\n')
-			if len(l)>1000:
-				continue
-			for s in strs:
-				point = self.t.sim(s,l)
-				print s
-				print l
-				print point
-				if point>3:
-					check=False
-					if len(s)>len(l):
-						strs.remove(s)
-						strs.append(l)
-					break
-				#if point<2:
-					#print s
-					#print l
-					#print len(l)
-					#print point
-			if check:
-				strs.append(l)
-		return strs
 	
 	def _semi_without(self,lines,lines_info,htmls):
 		strs=[]
@@ -382,7 +354,6 @@ if __name__ == '__main__':
 	start = time.clock()
 	start2 = time.time()
 	#p._p_fanhua()
-	#p._process()
 	if test == 'test':
 		print test
 		p._proc_call_shell(identify)
@@ -399,6 +370,8 @@ if __name__ == '__main__':
 		p._train_data('erzi')
 		p._train_data('nanyou')
 		p._train_data('nvyou')
+		#TODO 加入新的关系时，训练要加入p._train_data('xinguanxi')
+		
 	end = time.clock()
 	end2 = time.time()
 	print end-start

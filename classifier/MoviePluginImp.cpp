@@ -32,6 +32,7 @@ std::vector<std::string> typelist_vector;
 std::map< std::string, std::map<std::string, std::string> > mapedge_all;
 std::vector<std::string> edgelist_vector;
 std::map<std::string, std::string> logicname_map;
+std::string lvyouTime;
 //mutil thread var
 //::boost::thread_specific_ptr< gremlin::GraphQueryPtr > shandle_pool;
 ::boost::thread_specific_ptr< SPOThreadFifaData_t > SPOThreadFifaData_pool;
@@ -102,6 +103,11 @@ int64_t MoviePluginImp::InitOnce(
         CWARNING_LOG("logicname_dict info\t%s\t%s", tokens[0].c_str(), tokens[1].c_str());
         logicname_map.insert(std::pair<std::string, std::string>(tokens[0], tokens[1]));
     }
+    lvyouTime = config.get<std::string>("LvyouTime");
+    if (lvyouTime.find_first_not_of("0123456789") != std::string::npos || lvyouTime.length() != 8) {
+        lvyouTime = "today";
+    }
+    CDEBUG_LOG("LvyouTime info\t%s", lvyouTime.c_str());
     std::string typelist = config.get<std::string>("typelist");
     int len = split_words(typelist, ",", &typelist_vector);
     len = typelist_vector.size();
@@ -741,8 +747,8 @@ bool MoviePluginImp::is_date_in_week(const struct tm *ptm,const std::string& wee
     std::string week;
     if (ptm->tm_wday == 0) {
         week = "7";
-    }else {
-        std::stringstream ss;
+    }else { 
+        std::stringstream ss; 
         ss<<ptm->tm_wday;
         week = ss.str();
     }
@@ -795,7 +801,10 @@ bool MoviePluginImp::is_date_in_holiday(const struct tm *ptm,const std::vector<s
     strftime(today, sizeof(today), "%G%m%d",ptm);
     std::string holiday;
     for (int i=0; i<holidays.size(); i++) {
-        holiday += "\""+holidays[i]+"\",";
+        if (holidays[i].find("节假日") !=std::string::npos) {
+            holiday += "\"元旦\",\"春节\",\"清明节\",\"劳动节\",\"端午节\",\"中秋节\",\"国庆节\",";
+        } else 
+            holiday += "\""+holidays[i]+"\",";
     }
     holiday.erase(holiday.end()-1);
     //节假日
@@ -975,8 +984,6 @@ std::string MoviePluginImp::compute_today_price(const struct tm *ptm, ::faci::gr
                 }else if (tmp["month"].isMember("info") && tmp["month"]["info"].isString()) {
                     if (is_date_in_season(date,tmp["month"]["info"].asString())) {
                         return tmp["price"].asString();
-                    } else if (tmp["month"]["info"].asString().find("淡季")!=std::string::npos) {
-                        return tmp["price"].asString()+"起";
                     }
                 }
             }else {
@@ -995,11 +1002,28 @@ void MoviePluginImp::compute_scene_pc(::faci::graphsearch::Json& scene_json) {
         std::string structured_str;
         structured_json.toString(structured_str);
         CDEBUG_LOG("structured_info input : %s",structured_str.c_str());
-        std::time_t nowtime;
-        nowtime = time(NULL); //获取日历时间 
-        //struct tm *ptm=new struct tm;
-        //localtime_r(&nowtime,ptm);
-        struct tm *ptm = localtime(&nowtime);
+	struct tm *ptm;
+        if (lvyouTime == "today") {
+              std::time_t nowtime;
+              nowtime = time(NULL); //获取日历时间 
+              ptm = localtime(&nowtime);
+        } else {
+              ptm->tm_hour = 12;
+              ptm->tm_min = 0;
+              ptm->tm_sec = 0;
+              CDEBUG_LOG("ptm year input : %d",atoi(lvyouTime.substr(0, 4).c_str()));
+              CDEBUG_LOG("ptm mon input : %d",atoi(lvyouTime.substr(4, 2).c_str()));
+              CDEBUG_LOG("ptm day input : %d",atoi(lvyouTime.substr(6, 2).c_str()));
+              ptm->tm_year = atoi(lvyouTime.substr(0, 4).c_str())-1900;
+              ptm->tm_mon = atoi(lvyouTime.substr(4, 2).c_str())-1;
+              ptm->tm_mday = atoi(lvyouTime.substr(6, 2).c_str());
+              if (std::mktime(ptm) == -1) {
+                   CWARNING_LOG("config lvyouTime is wrong!");
+                   scene_json.removeMember("structured_info");
+                   return ;
+              }
+         }
+        
         // 计算当天时间和票价
         if (structured_json.isMember("openingHours")) {
             std::string toh = compute_today_openinghours(ptm,structured_json);
